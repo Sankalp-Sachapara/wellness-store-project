@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Increase item quantity
   async function increaseQuantity(itemId) {
     try {
-      const quantityElement = document.querySelector(`.cart-item[data-item-id="${itemId}"] .quantity-value`);
+      const quantityElement = document.querySelector(`.quantity-btn[data-item-id="${itemId}"]`).nextElementSibling;
       const currentQuantity = parseInt(quantityElement.textContent);
       const newQuantity = currentQuantity + 1;
       
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Decrease item quantity
   async function decreaseQuantity(itemId) {
     try {
-      const quantityElement = document.querySelector(`.cart-item[data-item-id="${itemId}"] .quantity-value`);
+      const quantityElement = document.querySelector(`.quantity-btn[data-item-id="${itemId}"]`).nextElementSibling;
       const currentQuantity = parseInt(quantityElement.textContent);
       
       if (currentQuantity <= 1) {
