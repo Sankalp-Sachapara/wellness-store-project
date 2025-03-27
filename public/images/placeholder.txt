@@ -1,0 +1,13 @@
+This directory should contain the following image files:
+
+1. hero-bg.jpg - For the homepage hero section
+2. supplements.jpg - For the supplements category
+3. fitness.jpg - For the fitness category
+4. nutrition.jpg - For the nutrition category
+5. skincare.jpg - For the skincare category
+6. about-bg.jpg - For the about page header
+7. contact-bg.jpg - For the contact page header
+8. products-bg.jpg - For the products page header
+9. default-product.jpg - Default product image
+
+You can place any appropriate images here with these filenames.
