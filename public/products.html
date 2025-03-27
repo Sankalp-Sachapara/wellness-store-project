@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products - Health & Wellness Store</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <h1>HealthHub</h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html" class="active">Products</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="nav-buttons">
+        <a href="login.html" class="btn login-btn">Login</a>
+        <a href="register.html" class="btn register-btn">Register</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="products-header">
+      <h1>Our Products</h1>
+      <p>Discover our range of health and wellness products</p>
+    </section>
+
+    <section class="products-filter">
+      <div class="filters">
+        <div class="filter-group">
+          <label for="category-filter">Category:</label>
+          <select id="category-filter">
+            <option value="all">All Categories</option>
+            <option value="supplements">Supplements</option>
+            <option value="fitness">Fitness</option>
+            <option value="nutrition">Nutrition</option>
+            <option value="skincare">Skincare</option>
+            <option value="wellness">Wellness</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="sort-filter">Sort By:</label>
+          <select id="sort-filter">
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="name-az">Name: A to Z</option>
+            <option value="name-za">Name: Z to A</option>
+            <option value="rating">Rating</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="products-list">
+      <div class="products-container" id="products-container">
+        <!-- Products will be loaded dynamically with JavaScript -->
+        <p class="loading-text">Loading products...</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <div class="footer-column">
+        <h3>HealthHub</h3>
+        <p>Your trusted source for health and wellness products.</p>
+      </div>
+      <div class="footer-column">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="products.html">Products</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-column">
+        <h3>Contact Us</h3>
+        <p><i class="fas fa-envelope"></i> info@healthhub.com</p>
+        <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+        <p><i class="fas fa-map-marker-alt"></i> 123 Wellness St, Health City</p>
+      </div>
+      <div class="footer-column">
+        <h3>Follow Us</h3>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-facebook"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 HealthHub. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/products.js"></script>
+</body>
+</html>
