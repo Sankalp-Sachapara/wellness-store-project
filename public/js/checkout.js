@@ -1,51 +1,51 @@
 // Checkout page functionality
 document.addEventListener('DOMContentLoaded', () => {
-  // Get DOM elements
-  const step1Element = document.getElementById('step-1');
-  const step2Element = document.getElementById('step-2');
-  const step3Element = document.getElementById('step-3');
-  const stepElements = document.querySelectorAll('.step');
+  // Steps containers
+  const step1 = document.getElementById('step-1');
+  const step2 = document.getElementById('step-2');
+  const step3 = document.getElementById('step-3');
   
+  // Step indicators
+  const stepIndicators = document.querySelectorAll('.step');
+  
+  // Form elements and buttons
   const billingForm = document.getElementById('billing-form');
   const toReviewBtn = document.getElementById('to-review-btn');
   const backToBillingBtn = document.getElementById('back-to-billing-btn');
   const placeOrderBtn = document.getElementById('place-order-btn');
   
-  const billingDetailsElement = document.getElementById('billing-details');
-  const orderItemsElement = document.getElementById('order-items');
-  const reviewSubtotalElement = document.getElementById('review-subtotal');
-  const reviewTotalElement = document.getElementById('review-total');
-  const orderNumberElement = document.getElementById('order-number');
+  // Review sections
+  const billingDetails = document.getElementById('billing-details');
+  const orderItems = document.getElementById('order-items');
+  const reviewSubtotal = document.getElementById('review-subtotal');
+  const reviewTotal = document.getElementById('review-total');
+  const orderNumber = document.getElementById('order-number');
   
-  // Billing information object
-  let billingInfo = {};
-  let cart = {};
-  
-  // Ensure user is logged in
+  // Check if user is logged in
   const user = checkAuthStatus();
   if (!user) {
     window.location.href = 'login.html?redirect=checkout.html';
     return;
   }
   
-  // Fetch cart data
-  fetchCart();
+  // Check if user has items in cart
+  checkCartItems();
   
   // Add event listeners
   if (toReviewBtn) {
-    toReviewBtn.addEventListener('click', validateBillingAndProceed);
+    toReviewBtn.addEventListener('click', goToReview);
   }
   
   if (backToBillingBtn) {
-    backToBillingBtn.addEventListener('click', goBackToBilling);
+    backToBillingBtn.addEventListener('click', goToBilling);
   }
   
   if (placeOrderBtn) {
     placeOrderBtn.addEventListener('click', placeOrder);
   }
   
-  // Fetch user's cart
-  async function fetchCart() {
+  // Check if cart has items
+  async function checkCartItems() {
     try {
       const response = await fetch(`${API_URL}/carts/${user._id}`);
       
@@ -53,23 +53,76 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('Failed to fetch cart');
       }
       
-      cart = await response.json();
+      const cart = await response.json();
       
       if (!cart.items || cart.items.length === 0) {
         // Redirect to cart page if cart is empty
         window.location.href = 'cart.html';
         return;
       }
+      
+      // Store cart data for later use
+      sessionStorage.setItem('cart', JSON.stringify(cart));
     } catch (error) {
-      console.error('Error fetching cart:', error);
-      alert('Error loading cart data. Please try again.');
+      console.error('Error checking cart:', error);
+      alert('Failed to load cart data. Please try again.');
+      window.location.href = 'cart.html';
     }
   }
   
-  // Validate billing information and proceed to review
-  function validateBillingAndProceed() {
-    // Clear previous error messages
+  // Go to review step
+  function goToReview() {
+    // Validate billing form
+    if (!validateBillingForm()) {
+      return;
+    }
+    
+    // Store billing info in session
+    storeBillingInfo();
+    
+    // Show review step
+    showStep(2);
+    
+    // Render review data
+    renderReviewData();
+  }
+  
+  // Go back to billing step
+  function goToBilling() {
+    showStep(1);
+  }
+  
+  // Show specified step
+  function showStep(stepNumber) {
+    // Hide all steps
+    step1.classList.remove('active');
+    step2.classList.remove('active');
+    step3.classList.remove('active');
+    
+    // Update step indicators
+    stepIndicators.forEach((indicator, index) => {
+      if (index < stepNumber) {
+        indicator.classList.add('active');
+      } else {
+        indicator.classList.remove('active');
+      }
+    });
+    
+    // Show current step
+    if (stepNumber === 1) {
+      step1.classList.add('active');
+    } else if (stepNumber === 2) {
+      step2.classList.add('active');
+    } else if (stepNumber === 3) {
+      step3.classList.add('active');
+    }
+  }
+  
+  // Validate billing form
+  function validateBillingForm() {
     clearErrorMessages();
+    
+    let isValid = true;
     
     // Get form values
     const firstName = document.getElementById('firstName').value.trim();
@@ -82,9 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const zipCode = document.getElementById('zipCode').value.trim();
     const country = document.getElementById('country').value;
     
-    // Validate inputs
-    let isValid = true;
-    
+    // Validate fields
     if (!firstName) {
       displayErrorMessage(document.getElementById('firstName-error'), 'First name is required');
       isValid = false;
@@ -124,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (!zipCode) {
-      displayErrorMessage(document.getElementById('zipCode-error'), 'ZIP/Postal code is required');
+      displayErrorMessage(document.getElementById('zipCode-error'), 'ZIP/Postal Code is required');
       isValid = false;
     }
     
@@ -133,54 +184,40 @@ document.addEventListener('DOMContentLoaded', () => {
       isValid = false;
     }
     
-    if (!isValid) return;
-    
-    // Save billing information
-    billingInfo = {
-      firstName,
-      lastName,
-      email,
-      phone,
-      address,
-      city,
-      state,
-      zipCode,
-      country
+    return isValid;
+  }
+  
+  // Store billing info in session storage
+  function storeBillingInfo() {
+    const billingInfo = {
+      firstName: document.getElementById('firstName').value.trim(),
+      lastName: document.getElementById('lastName').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      city: document.getElementById('city').value.trim(),
+      state: document.getElementById('state').value.trim(),
+      zipCode: document.getElementById('zipCode').value.trim(),
+      country: document.getElementById('country').value
     };
     
-    // Proceed to review step
-    goToReviewStep();
+    sessionStorage.setItem('billingInfo', JSON.stringify(billingInfo));
   }
   
-  // Go to review step
-  function goToReviewStep() {
-    // Update steps
-    stepElements[0].classList.remove('active');
-    stepElements[1].classList.add('active');
+  // Render review data
+  function renderReviewData() {
+    // Get billing info and cart data from session
+    const billingInfo = JSON.parse(sessionStorage.getItem('billingInfo'));
+    const cart = JSON.parse(sessionStorage.getItem('cart'));
     
-    // Hide step 1, show step 2
-    step1Element.classList.remove('active');
-    step2Element.classList.add('active');
+    if (!billingInfo || !cart) {
+      alert('Failed to load checkout data. Please try again.');
+      window.location.href = 'cart.html';
+      return;
+    }
     
-    // Render review information
-    renderBillingDetails();
-    renderOrderItems();
-  }
-  
-  // Go back to billing step
-  function goBackToBilling() {
-    // Update steps
-    stepElements[1].classList.remove('active');
-    stepElements[0].classList.add('active');
-    
-    // Hide step 2, show step 1
-    step2Element.classList.remove('active');
-    step1Element.classList.add('active');
-  }
-  
-  // Render billing details
-  function renderBillingDetails() {
-    let billingHTML = `
+    // Render billing details
+    const billingHTML = `
       <div class="billing-detail"><strong>Name:</strong> ${billingInfo.firstName} ${billingInfo.lastName}</div>
       <div class="billing-detail"><strong>Email:</strong> ${billingInfo.email}</div>
       <div class="billing-detail"><strong>Phone:</strong> ${billingInfo.phone}</div>
@@ -191,18 +228,9 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="billing-detail"><strong>Country:</strong> ${billingInfo.country}</div>
     `;
     
-    billingDetailsElement.innerHTML = billingHTML;
-  }
-  
-  // Render order items
-  function renderOrderItems() {
-    if (!cart.items || cart.items.length === 0) {
-      orderItemsElement.innerHTML = '<p>No items in cart.</p>';
-      reviewSubtotalElement.textContent = formatPrice(0);
-      reviewTotalElement.textContent = formatPrice(0);
-      return;
-    }
+    billingDetails.innerHTML = billingHTML;
     
+    // Render order items
     let itemsHTML = '';
     
     cart.items.forEach(item => {
@@ -213,31 +241,35 @@ document.addEventListener('DOMContentLoaded', () => {
             <h4>${item.name}</h4>
             <p>Quantity: ${item.quantity}</p>
           </div>
-          <div class="review-item-price">
-            ${formatPrice(item.price * item.quantity)}
-          </div>
+          <div class="review-item-price">${formatPrice(item.price * item.quantity)}</div>
         </div>
       `;
     });
     
-    orderItemsElement.innerHTML = itemsHTML;
-    reviewSubtotalElement.textContent = formatPrice(cart.totalAmount);
-    reviewTotalElement.textContent = formatPrice(cart.totalAmount);
+    orderItems.innerHTML = itemsHTML;
+    
+    // Update totals
+    reviewSubtotal.textContent = formatPrice(cart.totalAmount);
+    reviewTotal.textContent = formatPrice(cart.totalAmount);
   }
   
   // Place order
   async function placeOrder() {
     try {
-      const orderData = {
-        billingInfo
-      };
+      const billingInfo = JSON.parse(sessionStorage.getItem('billingInfo'));
+      
+      if (!billingInfo) {
+        alert('Billing information is missing. Please try again.');
+        goToBilling();
+        return;
+      }
       
       const response = await fetch(`${API_URL}/orders/${user._id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify({ billingInfo })
       });
       
       if (!response.ok) {
@@ -246,25 +278,20 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const order = await response.json();
       
-      // Go to confirmation step
-      goToConfirmationStep(order);
+      // Show confirmation step
+      showStep(3);
+      
+      // Display order number
+      if (orderNumber) {
+        orderNumber.textContent = order.order.orderNumber;
+      }
+      
+      // Clear session storage
+      sessionStorage.removeItem('billingInfo');
+      sessionStorage.removeItem('cart');
     } catch (error) {
       console.error('Error placing order:', error);
       alert('Failed to place order. Please try again.');
     }
-  }
-  
-  // Go to confirmation step
-  function goToConfirmationStep(order) {
-    // Update steps
-    stepElements[1].classList.remove('active');
-    stepElements[2].classList.add('active');
-    
-    // Hide step 2, show step 3
-    step2Element.classList.remove('active');
-    step3Element.classList.add('active');
-    
-    // Set order number
-    orderNumberElement.textContent = order.order.orderNumber;
   }
 });
