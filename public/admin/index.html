@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Health & Wellness Store</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <h1>HealthHub Admin</h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../index.html">Store Front</a></li>
+        <li><a href="index.html" class="active">Dashboard</a></li>
+        <li><a href="manage-products.html">Products</a></li>
+        <li><a href="#">Users</a></li>
+      </ul>
+      <div class="nav-buttons">
+        <a href="#" id="admin-logout" class="btn logout-btn">Logout</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-sidebar">
+      <ul class="admin-menu">
+        <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="#"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+      </ul>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-header">
+        <h2>Dashboard</h2>
+        <div class="date-display" id="current-date"></div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-box"></i></div>
+          <div class="value" id="total-products">0</div>
+          <div class="label">Total Products</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-users"></i></div>
+          <div class="value" id="total-users">0</div>
+          <div class="label">Registered Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-shopping-cart"></i></div>
+          <div class="value" id="total-orders">0</div>
+          <div class="label">Total Orders</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <div class="value" id="low-stock">0</div>
+          <div class="label">Low Stock Items</div>
+        </div>
+      </div>
+
+      <div class="recent-orders">
+        <h3>Recent Orders</h3>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recent-orders-list">
+              <tr>
+                <td colspan="6">No recent orders found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="low-stock-products">
+        <h3>Low Stock Products</h3>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="low-stock-list">
+              <tr>
+                <td colspan="5">No low stock products found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Display current date
+      const today = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('current-date').textContent = today.toLocaleDateString('en-US', options);
+
+      // Check if user is admin
+      const user = checkAuthStatus();
+      if (!user || !user.isAdmin) {
+        window.location.href = '../login.html';
+        return;
+      }
+
+      // Fetch dashboard data
+      fetchDashboardData();
+
+      async function fetchDashboardData() {
+        try {
+          // Fetch products
+          const productsResponse = await fetch(`${API_URL}/products`);
+          if (productsResponse.ok) {
+            const products = await productsResponse.json();
+            
+            // Update total products
+            document.getElementById('total-products').textContent = products.length;
+            
+            // Check for low stock products
+            const lowStockProducts = products.filter(product => product.stock < 10);
+            document.getElementById('low-stock').textContent = lowStockProducts.length;
+            
+            // Display low stock products if any
+            if (lowStockProducts.length > 0) {
+              displayLowStockProducts(lowStockProducts);
+            }
+          }
+          
+          // In a real app, we would fetch users and orders data here
+          // For this demo, we'll use placeholder values
+          document.getElementById('total-users').textContent = '15';
+          document.getElementById('total-orders').textContent = '24';
+          
+          // Display placeholder recent orders
+          displayRecentOrders();
+          
+        } catch (error) {
+          console.error('Error fetching dashboard data:', error);
+        }
+      }
+      
+      function displayLowStockProducts(products) {
+        const lowStockList = document.getElementById('low-stock-list');
+        let html = '';
+        
+        products.forEach(product => {
+          html += `
+            <tr>
+              <td>${product._id}</td>
+              <td>${product.name}</td>
+              <td>${product.category}</td>
+              <td><span class="stock-low">${product.stock}</span></td>
+              <td>
+                <a href="manage-products.html" class="action-btn edit-btn"><i class="fas fa-edit"></i></a>
+              </td>
+            </tr>
+          `;
+        });
+        
+        lowStockList.innerHTML = html;
+      }
+      
+      function displayRecentOrders() {
+        // This is placeholder data for demonstration
+        const recentOrdersList = document.getElementById('recent-orders-list');
+        const sampleOrders = [
+          {
+            id: 'ORD-1234',
+            customer: 'John Doe',
+            date: '2025-03-25',
+            status: 'Delivered',
+            total: 79.99
+          },
+          {
+            id: 'ORD-1233',
+            customer: 'Jane Smith',
+            date: '2025-03-24',
+            status: 'Processing',
+            total: 145.50
+          },
+          {
+            id: 'ORD-1232',
+            customer: 'Michael Brown',
+            date: '2025-03-23',
+            status: 'Shipped',
+            total: 62.75
+          }
+        ];
+        
+        let html = '';
+        
+        sampleOrders.forEach(order => {
+          let statusClass = '';
+          
+          switch (order.status.toLowerCase()) {
+            case 'delivered':
+              statusClass = 'status-success';
+              break;
+            case 'processing':
+              statusClass = 'status-warning';
+              break;
+            case 'shipped':
+              statusClass = 'status-info';
+              break;
+            default:
+              statusClass = '';
+          }
+          
+          html += `
+            <tr>
+              <td>${order.id}</td>
+              <td>${order.customer}</td>
+              <td>${order.date}</td>
+              <td><span class="${statusClass}">${order.status}</span></td>
+              <td>${formatPrice(order.total)}</td>
+              <td>
+                <button class="action-btn view-btn"><i class="fas fa-eye"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        recentOrdersList.innerHTML = html;
+      }
+    });
+  </script>
+</body>
+</html>
