@@ -1,0 +1,288 @@
+/* Orders Page Styles */
+.orders-container {
+  padding: 60px 20px;
+  background-color: #fff;
+}
+
+.empty-orders-message {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.empty-orders-message i {
+  font-size: a4rem;
+  color: #ddd;
+  margin-bottom: 20px;
+}
+
+.empty-orders-message h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.empty-orders-message p {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.order-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.order-number {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.order-date {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.order-status {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background-color: #FFF3CD;
+  color: #856404;
+}
+
+.status-processing {
+  background-color: #D1ECF1;
+  color: #0C5460;
+}
+
+.status-shipped {
+  background-color: #D4EDDA;
+  color: #155724;
+}
+
+.status-delivered {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.status-cancelled {
+  background-color: #F8D7DA;
+  color: #721C24;
+}
+
+.order-content {
+  padding: 20px;
+}
+
+.order-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.order-total {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.order-total-label {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: normal;
+}
+
+.order-items-summary {
+  color: #666;
+}
+
+.order-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.order-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.order-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 15px;
+}
+
+.order-item-info h4 {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.order-item-info p {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.order-item-price {
+  margin-left: auto;
+  font-weight: 500;
+}
+
+.order-detail-content {
+  margin-top: 20px;
+}
+
+.order-detail-content h3 {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #ddd;
+}
+
+.detail-section {
+  margin-bottom: 30px;
+}
+
+.detail-section h4 {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 5px;
+}
+
+.detail-label {
+  width: 150px;
+  font-weight: 500;
+}
+
+.detail-value {
+  flex: 1;
+}
+
+.tracking-info {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.tracking-info h4 {
+  margin-bottom: 10px;
+}
+
+.tracking-number {
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+/* Order Timeline */
+.order-timeline {
+  margin: 30px 0;
+  position: relative;
+}
+
+.order-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15px;
+  height: 100%;
+  width: 2px;
+  background-color: #ddd;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 45px;
+  margin-bottom: 25px;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 9px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 2px solid #4CAF50;
+}
+
+.timeline-date {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.timeline-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.timeline-description {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .timeline-item {
+    padding-left: 35px;
+  }
+  
+  .timeline-item::before {
+    left: 5px;
+    width: 10px;
+    height: 10px;
+  }
+  
+  .order-timeline::before {
+    left: 10px;
+  }
+}
