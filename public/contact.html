@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us - Health & Wellness Store</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <h1>HealthHub</h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html" class="active">Contact</a></li>
+      </ul>
+      <div class="nav-buttons">
+        <a href="login.html" class="btn login-btn">Login</a>
+        <a href="register.html" class="btn register-btn">Register</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-header" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('images/contact-bg.jpg');">
+      <h1>Contact Us</h1>
+      <p>We'd love to hear from you</p>
+    </section>
+
+    <section class="contact-container">
+      <div class="container">
+        <div class="contact-info">
+          <h2>Get in Touch</h2>
+          <p>Have questions about our products or services? Reach out to us using any of the methods below:</p>
+          
+          <div class="contact-methods">
+            <div class="contact-method">
+              <i class="fas fa-map-marker-alt"></i>
+              <div>
+                <h3>Our Location</h3>
+                <p>123 Wellness Street<br>Health City, HC 12345</p>
+              </div>
+            </div>
+            
+            <div class="contact-method">
+              <i class="fas fa-phone"></i>
+              <div>
+                <h3>Phone</h3>
+                <p>(123) 456-7890</p>
+                <p>Monday - Friday: 9am - 5pm</p>
+              </div>
+            </div>
+            
+            <div class="contact-method">
+              <i class="fas fa-envelope"></i>
+              <div>
+                <h3>Email</h3>
+                <p>info@healthhub.com</p>
+                <p>support@healthhub.com</p>
+              </div>
+            </div>
+            
+            <div class="contact-method">
+              <i class="fas fa-comments"></i>
+              <div>
+                <h3>Live Chat</h3>
+                <p>Available on our website</p>
+                <p>Monday - Friday: 9am - 7pm</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="contact-form-container">
+          <h2>Send Us a Message</h2>
+          <form id="contact-form" class="contact-form">
+            <div class="form-group">
+              <label for="name">Your Name</label>
+              <input type="text" id="name" name="name" required>
+              <span class="error-message" id="name-error"></span>
+            </div>
+            
+            <div class="form-group">
+              <label for="email">Your Email</label>
+              <input type="email" id="email" name="email" required>
+              <span class="error-message" id="email-error"></span>
+            </div>
+            
+            <div class="form-group">
+              <label for="subject">Subject</label>
+              <input type="text" id="subject" name="subject" required>
+              <span class="error-message" id="subject-error"></span>
+            </div>
+            
+            <div class="form-group">
+              <label for="message">Your Message</label>
+              <textarea id="message" name="message" rows="5" required></textarea>
+              <span class="error-message" id="message-error"></span>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Send Message</button>
+            <p class="form-message" id="form-message"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+    
+    <section class="map-section">
+      <div class="container">
+        <h2>Find Us</h2>
+        <div class="map-container">
+          <!-- Placeholder for map -->
+          <div class="map-placeholder">
+            <p>Map placeholder - Google Maps would be integrated here</p>
+            <i class="fas fa-map-marked-alt"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <div class="footer-column">
+        <h3>HealthHub</h3>
+        <p>Your trusted source for health and wellness products.</p>
+      </div>
+      <div class="footer-column">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="products.html">Products</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-column">
+        <h3>Contact Us</h3>
+        <p><i class="fas fa-envelope"></i> info@healthhub.com</p>
+        <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+        <p><i class="fas fa-map-marker-alt"></i> 123 Wellness St, Health City</p>
+      </div>
+      <div class="footer-column">
+        <h3>Follow Us</h3>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-facebook"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 HealthHub. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Basic form validation for contact form
+    document.addEventListener('DOMContentLoaded', () => {
+      const contactForm = document.getElementById('contact-form');
+      if (contactForm) {
+        contactForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          
+          // Clear previous error messages
+          clearErrorMessages();
+          
+          // Validate form fields
+          let isValid = true;
+          const name = document.getElementById('name').value.trim();
+          const email = document.getElementById('email').value.trim();
+          const subject = document.getElementById('subject').value.trim();
+          const message = document.getElementById('message').value.trim();
+          const formMessage = document.getElementById('form-message');
+          
+          if (!name) {
+            displayErrorMessage(document.getElementById('name-error'), 'Name is required');
+            isValid = false;
+          }
+          
+          if (!email) {
+            displayErrorMessage(document.getElementById('email-error'), 'Email is required');
+            isValid = false;
+          } else if (!validateEmail(email)) {
+            displayErrorMessage(document.getElementById('email-error'), 'Please enter a valid email address');
+            isValid = false;
+          }
+          
+          if (!subject) {
+            displayErrorMessage(document.getElementById('subject-error'), 'Subject is required');
+            isValid = false;
+          }
+          
+          if (!message) {
+            displayErrorMessage(document.getElementById('message-error'), 'Message is required');
+            isValid = false;
+          }
+          
+          if (isValid) {
+            // In a real application, this would submit the form data to a server
+            formMessage.textContent = 'Your message has been sent. We will contact you soon!';
+            formMessage.style.color = 'var(--primary-color)';
+            contactForm.reset();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
