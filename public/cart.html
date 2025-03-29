@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shopping Cart - Health & Wellness Store</title>
+  <title>Your Cart | Health & Wellness Store</title>
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
@@ -20,62 +20,24 @@
         <li><a href="contact.html">Contact</a></li>
       </ul>
       <div class="nav-buttons">
-        <a href="login.html" class="btn login-btn">Login</a>
-        <a href="register.html" class="btn register-btn">Register</a>
+        <a href="cart.html" class="cart-icon active">
+          <i class="fas fa-shopping-cart"></i>
+          <span id="cart-counter" class="cart-counter">0</span>
+        </a>
+        <div id="user-menu">
+          <!-- User menu will be populated by JavaScript -->
+        </div>
       </div>
     </nav>
   </header>
 
   <main>
-    <section class="page-header" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('images/cart-bg.jpg');">
-      <h1>Shopping Cart</h1>
-      <p>Review your items before checkout</p>
-    </section>
-
-    <section class="cart-container">
+    <section class="cart-section">
       <div class="container">
-        <div id="cart-empty" style="display: none;">
-          <div class="empty-cart-message">
-            <i class="fas fa-shopping-cart"></i>
-            <h2>Your cart is empty</h2>
-            <p>Looks like you haven't added any products to your cart yet.</p>
-            <a href="products.html" class="btn">Browse Products</a>
-          </div>
-        </div>
+        <h1 class="section-title"><i class="fas fa-shopping-cart"></i> Your Cart</h1>
         
-        <div id="cart-items">
-          <div class="cart-content">
-            <div class="cart-header">
-              <div class="cart-product">Product</div>
-              <div class="cart-price">Price</div>
-              <div class="cart-quantity">Quantity</div>
-              <div class="cart-total">Total</div>
-              <div class="cart-action">Action</div>
-            </div>
-            
-            <div id="cart-products-list">
-              <!-- Cart items will be loaded dynamically with JavaScript -->
-              <p class="loading-text">Loading cart...</p>
-            </div>
-          </div>
-          
-          <div class="cart-summary">
-            <h3>Order Summary</h3>
-            <div class="summary-item">
-              <span>Subtotal:</span>
-              <span id="cart-subtotal">$0.00</span>
-            </div>
-            <div class="summary-item">
-              <span>Shipping:</span>
-              <span>Free</span>
-            </div>
-            <div class="summary-item total">
-              <span>Total:</span>
-              <span id="cart-total">$0.00</span>
-            </div>
-            <button id="checkout-btn" class="btn btn-primary">Proceed to Checkout</button>
-            <button id="clear-cart-btn" class="btn btn-secondary">Clear Cart</button>
-          </div>
+        <div id="cart-container">
+          <p class="loading-text">Loading your cart...</p>
         </div>
       </div>
     </section>
