@@ -55,42 +55,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Cart has items
-    let cartHTML = `
-      <div class="cart-items">
-        <div class="cart-header">
-          <div class="cart-header-product">Product</div>
-          <div class="cart-header-price">Price</div>
-          <div class="cart-header-quantity">Quantity</div>
-          <div class="cart-header-total">Total</div>
-          <div class="cart-header-actions">Actions</div>
-        </div>
-    `;
+    let cartHTML = `<div class="cart-item-list">`;
     
-    // Add cart items
+    // Cart items
     cart.items.forEach(item => {
       const itemTotal = item.price * item.quantity;
       
       cartHTML += `
         <div class="cart-item" data-item-id="${item._id}">
-          <div class="cart-item-product">
-            <img src="${item.imageUrl || '../images/default-product.jpg'}" alt="${item.name}" class="cart-item-img">
-            <div class="cart-item-details">
-              <h3 class="cart-item-name">${item.name}</h3>
-            </div>
+          <div class="cart-item-img-container">
+            <img src="${item.imageUrl || 'images/default-product.jpg'}" alt="${item.name}" class="cart-item-img">
           </div>
-          <div class="cart-item-price">${formatPrice(item.price)}</div>
+          <div class="cart-item-details">
+            <h3 class="cart-item-name">${item.name}</h3>
+            <p class="cart-item-price">${formatPrice(item.price)}</p>
+          </div>
           <div class="cart-item-quantity">
-            <div class="quantity-controls">
-              <button class="quantity-btn quantity-decrease" onclick="updateQuantity('${item._id}', ${item.quantity - 1})" ${item.quantity <= 1 ? 'disabled' : ''}>
-                <i class="fas fa-minus"></i>
-              </button>
-              <input type="number" class="quantity-input" value="${item.quantity}" min="1" max="99" onchange="updateQuantity('${item._id}', this.value)">
-              <button class="quantity-btn quantity-increase" onclick="updateQuantity('${item._id}', ${item.quantity + 1})">
-                <i class="fas fa-plus"></i>
-              </button>
-            </div>
+            <button class="quantity-btn decrease" onclick="updateQuantity('${item._id}', ${item.quantity - 1})" ${item.quantity <= 1 ? 'disabled' : ''}>
+              <i class="fas fa-minus"></i>
+            </button>
+            <input type="number" class="quantity-input" value="${item.quantity}" min="1" max="99" onchange="updateQuantity('${item._id}', this.value)">
+            <button class="quantity-btn increase" onclick="updateQuantity('${item._id}', ${item.quantity + 1})">
+              <i class="fas fa-plus"></i>
+            </button>
           </div>
-          <div class="cart-item-total">${formatPrice(itemTotal)}</div>
+          <div class="cart-item-total">
+            ${formatPrice(itemTotal)}
+          </div>
           <div class="cart-item-actions">
             <button class="btn btn-danger btn-sm" onclick="removeFromCart('${item._id}')">
               <i class="fas fa-trash"></i>
@@ -100,9 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     });
     
+    cartHTML += `</div>`;
+    
     // Cart summary
     cartHTML += `
-      </div>
       <div class="cart-summary">
         <div class="cart-summary-row">
           <span>Subtotal:</span>
@@ -120,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <a href="products.html" class="btn btn-secondary">Continue Shopping</a>
           <a href="checkout.html" class="btn btn-primary">Proceed to Checkout</a>
         </div>
-        <button class="btn btn-danger btn-sm" onclick="clearCart()">
+        <button class="btn btn-danger" onclick="clearCart()">
           <i class="fas fa-trash"></i> Clear Cart
         </button>
       </div>
