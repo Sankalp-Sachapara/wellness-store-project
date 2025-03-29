@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const cartController = require('../controllers/cartController');
 
+// Get all carts (admin only)
+router.get('/', cartController.getAllCarts);
+
 // Get user's cart
 router.get('/:userId', cartController.getCart);
 
