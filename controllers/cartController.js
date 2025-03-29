@@ -1,6 +1,18 @@
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 
+// Get all carts (admin only)
+exports.getAllCarts = async (req, res) => {
+  try {
+    const carts = await Cart.find()
+      .sort({ updatedAt: -1 }); // Latest carts first
+    
+    res.status(200).json(carts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get user's cart
 exports.getCart = async (req, res) => {
   try {
