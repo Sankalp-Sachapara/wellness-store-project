@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Carts - Health & Wellness Store</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <h1>HealthHub Admin</h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../index.html">Store Front</a></li>
+        <li><a href="index.html">Dashboard</a></li>
+        <li><a href="manage-products.html">Products</a></li>
+        <li><a href="manage-carts.html" class="active">Carts</a></li>
+        <li><a href="#">Users</a></li>
+      </ul>
+      <div class="nav-buttons">
+        <a href="#" id="admin-logout" class="btn logout-btn">Logout</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-sidebar">
+      <ul class="admin-menu">
+        <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="manage-carts.html" class="active"><i class="fas fa-shopping-cart"></i> Carts</a></li>
+        <li><a href="#"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+      </ul>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-header">
+        <h2>Manage Shopping Carts</h2>
+        <div class="filters">
+          <input type="text" id="cart-search" placeholder="Search by User ID or Name" class="search-input">
+          <select id="cart-status-filter" class="filter-select">
+            <option value="all">All Carts</option>
+            <option value="active">Active</option>
+            <option value="empty">Empty</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="active-carts">
+        <h3>Active Shopping Carts</h3>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Cart ID</th>
+                <th>User ID</th>
+                <th>Items</th>
+                <th>Total Value</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="carts-list">
+              <tr>
+                <td colspan="6" class="loading-message">Loading carts...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Cart Detail Modal -->
+      <div id="cart-detail-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Cart Details</h3>
+            <span class="close">&times;</span>
+          </div>
+          <div class="modal-body" id="cart-detail-content">
+            <div class="loading-spinner">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Loading cart details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check if user is admin
+      const user = checkAuthStatus();
+      if (!user || !user.isAdmin) {
+        window.location.href = '../login.html';
+        return;
+      }
+      
+      // Elements
+      const cartsList = document.getElementById('carts-list');
+      const cartSearch = document.getElementById('cart-search');
+      const statusFilter = document.getElementById('cart-status-filter');
+      const cartDetailModal = document.getElementById('cart-detail-modal');
+      const cartDetailContent = document.getElementById('cart-detail-content');
+      const closeModalBtn = document.querySelector('.close');
+      
+      // Global variables
+      let allCarts = [];
+      
+      // Fetch all carts
+      fetchCarts();
+      
+      // Event listeners
+      if (cartSearch) {
+        cartSearch.addEventListener('input', filterCarts);
+      }
+      
+      if (statusFilter) {
+        statusFilter.addEventListener('change', filterCarts);
+      }
+      
+      closeModalBtn.addEventListener('click', closeModal);
+      
+      // Fetch carts data
+      async function fetchCarts() {
+        try {
+          const response = await fetch(`${API_URL}/carts`);
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch carts');
+          }
+          
+          allCarts = await response.json();
+          renderCarts(allCarts);
+        } catch (error) {
+          console.error('Error fetching carts:', error);
+          cartsList.innerHTML = `<tr><td colspan="6" class="error-message">Error loading carts. Please try again later.</td></tr>`;
+        }
+      }
+      
+      // Render carts table
+      function renderCarts(carts) {
+        if (carts.length === 0) {
+          cartsList.innerHTML = '<tr><td colspan="6">No carts found.</td></tr>';
+          return;
+        }
+        
+        let cartsHTML = '';
+        
+        carts.forEach(cart => {
+          const hasItems = cart.items && cart.items.length > 0;
+          const totalItems = hasItems ? cart.items.length : 0;
+          const totalValue = hasItems ? cart.totalAmount : 0;
+          const lastUpdated = new Date(cart.updatedAt).toLocaleString();
+          
+          cartsHTML += `
+            <tr>
+              <td>${cart._id}</td>
+              <td>${cart.user}</td>
+              <td>${totalItems}</td>
+              <td>${formatPrice(totalValue)}</td>
+              <td>${lastUpdated}</td>
+              <td class="action-buttons">
+                <button class="action-btn view-btn" data-cart-id="${cart._id}" onclick="viewCartDetails('${cart._id}')">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn delete-btn" data-cart-id="${cart._id}" onclick="clearCartFromAdmin('${cart._id}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        cartsList.innerHTML = cartsHTML;
+      }
+      
+      // Filter carts
+      function filterCarts() {
+        const searchTerm = cartSearch.value.toLowerCase();
+        const status = statusFilter.value;
+        
+        let filteredCarts = [...allCarts];
+        
+        // Filter by search term
+        if (searchTerm) {
+          filteredCarts = filteredCarts.filter(cart => 
+            cart._id.toLowerCase().includes(searchTerm) || 
+            cart.user.toLowerCase().includes(searchTerm)
+          );
+        }
+        
+        // Filter by status
+        if (status !== 'all') {
+          if (status === 'active') {
+            filteredCarts = filteredCarts.filter(cart => 
+              cart.items && cart.items.length > 0
+            );
+          } else if (status === 'empty') {
+            filteredCarts = filteredCarts.filter(cart => 
+              !cart.items || cart.items.length === 0
+            );
+          }
+        }
+        
+        renderCarts(filteredCarts);
+      }
+      
+      // Close modal
+      function closeModal() {
+        cartDetailModal.style.display = 'none';
+      }
+      
+      // Click outside modal to close
+      window.addEventListener('click', (event) => {
+        if (event.target === cartDetailModal) {
+          closeModal();
+        }
+      });
+      
+      // Make function global for buttons
+      window.viewCartDetails = async function(cartId) {
+        // Show modal
+        cartDetailModal.style.display = 'block';
+        cartDetailContent.innerHTML = `
+          <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading cart details...</p>
+          </div>
+        `;
+        
+        try {
+          const response = await fetch(`${API_URL}/carts/${cartId}`);
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch cart details');
+          }
+          
+          const cart = await response.json();
+          displayCartDetails(cart);
+        } catch (error) {
+          console.error('Error fetching cart details:', error);
+          cartDetailContent.innerHTML = `
+            <div class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              <p>Failed to load cart details. Please try again.</p>
+            </div>
+          `;
+        }
+      };
+      
+      // Clear cart from admin
+      window.clearCartFromAdmin = async function(cartId) {
+        if (!confirm('Are you sure you want to clear this cart?')) {
+          return;
+        }
+        
+        try {
+          const response = await fetch(`${API_URL}/carts/${cartId}/clear`, {
+            method: 'DELETE'
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to clear cart');
+          }
+          
+          // Refresh carts list
+          await fetchCarts();
+        } catch (error) {
+          console.error('Error clearing cart:', error);
+          alert('Failed to clear cart. Please try again.');
+        }
+      };
+      
+      // Display cart details in modal
+      function displayCartDetails(cart) {
+        const hasItems = cart.items && cart.items.length > 0;
+        const lastUpdated = new Date(cart.updatedAt).toLocaleString();
+        
+        let detailsHTML = `
+          <div class="cart-info">
+            <p><strong>Cart ID:</strong> ${cart._id}</p>
+            <p><strong>User ID:</strong> ${cart.user}</p>
+            <p><strong>Last Updated:</strong> ${lastUpdated}</p>
+            <p><strong>Items:</strong> ${hasItems ? cart.items.length : 0}</p>
+            <p><strong>Total Value:</strong> ${formatPrice(cart.totalAmount || 0)}</p>
+          </div>
+        `;
+        
+        if (hasItems) {
+          detailsHTML += `
+            <div class="cart-items-table">
+              <h4>Cart Items</h4>
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Product ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          
+          cart.items.forEach(item => {
+            const subtotal = item.price * item.quantity;
+            
+            detailsHTML += `
+              <tr>
+                <td>${item.product}</td>
+                <td>${item.name}</td>
+                <td>${formatPrice(item.price)}</td>
+                <td>${item.quantity}</td>
+                <td>${formatPrice(subtotal)}</td>
+              </tr>
+            `;
+          });
+          
+          detailsHTML += `
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          detailsHTML += `
+            <div class="empty-cart-message">
+              <i class="fas fa-shopping-cart"></i>
+              <p>This cart is empty.</p>
+            </div>
+          `;
+        }
+        
+        cartDetailContent.innerHTML = detailsHTML;
+      }
+    });
+  </script>
+</body>
+</html>
