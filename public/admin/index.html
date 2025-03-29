@@ -18,6 +18,7 @@
         <li><a href="../index.html">Store Front</a></li>
         <li><a href="index.html" class="active">Dashboard</a></li>
         <li><a href="manage-products.html">Products</a></li>
+        <li><a href="manage-carts.html">Carts</a></li>
         <li><a href="#">Users</a></li>
       </ul>
       <div class="nav-buttons">
@@ -31,6 +32,7 @@
       <ul class="admin-menu">
         <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
         <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="manage-carts.html"><i class="fas fa-shopping-cart"></i> Carts</a></li>
         <li><a href="#"><i class="fas fa-users"></i> Users</a></li>
         <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
       </ul>
@@ -55,13 +57,39 @@
         </div>
         <div class="stat-card">
           <div class="icon"><i class="fas fa-shopping-cart"></i></div>
-          <div class="value" id="total-orders">0</div>
-          <div class="label">Total Orders</div>
+          <div class="value" id="active-carts">0</div>
+          <div class="label">Active Carts</div>
         </div>
         <div class="stat-card">
           <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
           <div class="value" id="low-stock">0</div>
           <div class="label">Low Stock Items</div>
+        </div>
+      </div>
+
+      <div class="active-carts-section">
+        <h3>Active Shopping Carts</h3>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Cart ID</th>
+                <th>User ID</th>
+                <th>Items</th>
+                <th>Total Value</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="active-carts-list">
+              <tr>
+                <td colspan="6" class="loading-message">Loading active carts...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="view-all-link">
+          <a href="manage-carts.html" class="btn btn-primary">View All Carts</a>
         </div>
       </div>
 
@@ -151,10 +179,22 @@
             }
           }
           
+          // Fetch carts
+          const cartsResponse = await fetch(`${API_URL}/carts`);
+          if (cartsResponse.ok) {
+            const carts = await cartsResponse.json();
+            
+            // Get active carts (carts with items)
+            const activeCarts = carts.filter(cart => cart.items && cart.items.length > 0);
+            document.getElementById('active-carts').textContent = activeCarts.length;
+            
+            // Display active carts
+            displayActiveCarts(activeCarts.slice(0, 5)); // Show only 5 most recent
+          }
+          
           // In a real app, we would fetch users and orders data here
           // For this demo, we'll use placeholder values
           document.getElementById('total-users').textContent = '15';
-          document.getElementById('total-orders').textContent = '24';
           
           // Display placeholder recent orders
           displayRecentOrders();
@@ -183,6 +223,38 @@
         });
         
         lowStockList.innerHTML = html;
+      }
+      
+      function displayActiveCarts(carts) {
+        const activeCartsList = document.getElementById('active-carts-list');
+        
+        if (!carts || carts.length === 0) {
+          activeCartsList.innerHTML = '<tr><td colspan="6">No active carts found</td></tr>';
+          return;
+        }
+        
+        let html = '';
+        
+        carts.forEach(cart => {
+          const totalItems = cart.items.length;
+          const totalValue = cart.totalAmount || cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          const lastUpdated = new Date(cart.updatedAt).toLocaleString();
+          
+          html += `
+            <tr>
+              <td>${cart._id}</td>
+              <td>${cart.user}</td>
+              <td>${totalItems}</td>
+              <td>${formatPrice(totalValue)}</td>
+              <td>${lastUpdated}</td>
+              <td>
+                <a href="manage-carts.html" class="action-btn view-btn"><i class="fas fa-eye"></i></a>
+              </td>
+            </tr>
+          `;
+        });
+        
+        activeCartsList.innerHTML = html;
       }
       
       function displayRecentOrders() {
