@@ -55,9 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="product-detail-price">${formatPrice(product.price)}</p>
           <p class="product-detail-description">${product.description}</p>
           <p class="product-detail-stock ${stockClass}"><i class="fas fa-${product.stock > 0 ? 'check-circle' : 'times-circle'}"></i> ${stockText} ${product.stock > 0 ? '(' + product.stock + ' available)' : ''}</p>
-          <button id="add-to-cart-btn" class="btn btn-primary ${product.stock <= 0 ? 'disabled' : ''}" ${product.stock <= 0 ? 'disabled' : ''}>
+          <div class="quantity-container">
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" min="1" max="${product.stock}" value="1" ${product.stock <= 0 ? 'disabled' : ''}>
+          </div>
+          <button id="add-to-cart-btn" data-product-id="${product._id}" class="btn btn-primary ${product.stock <= 0 ? 'disabled' : ''}" ${product.stock <= 0 ? 'disabled' : ''}>
             <i class="fas fa-shopping-cart"></i> Add to Cart
           </button>
+          <div id="cart-message"></div>
           <a href="products.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Products</a>
         </div>
       </div>
@@ -67,15 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add event listener to the Add to Cart button
     const addToCartBtn = document.getElementById('add-to-cart-btn');
+    const quantityInput = document.getElementById('quantity');
+    
     if (addToCartBtn && product.stock > 0) {
       addToCartBtn.addEventListener('click', () => {
-        addToCart(product._id);
+        const quantity = parseInt(quantityInput.value) || 1;
+        addToCart(product._id, quantity);
       });
     }
   }
   
   // Function to add product to cart
-  async function addToCart(productId) {
+  async function addToCart(productId, quantity) {
     // Check if user is logged in
     const user = checkAuthStatus();
     if (!user) {
@@ -84,11 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
+    // Disable the button during the request
+    const addToCartBtn = document.getElementById('add-to-cart-btn');
+    const cartMessage = document.getElementById('cart-message');
+    
+    addToCartBtn.disabled = true;
+    addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    
     try {
-      // Set quantity (default to 1)
-      const quantity = 1;
-      
-      console.log(`Adding product to cart: ${productId}`);
+      console.log(`Adding product to cart: ${productId} (Quantity: ${quantity})`);
       
       // Make API call to add to cart
       const response = await fetch(`${API_URL}/carts/${user._id}/add`, {
@@ -106,12 +118,143 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('Failed to add item to cart');
       }
       
+      const cartData = await response.json();
+      
       // Show success message
-      alert('Product added to cart successfully!');
+      cartMessage.innerHTML = `
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle"></i> Added to cart successfully!
+          <div class="cart-actions">
+            <a href="cart.html" class="btn btn-sm">View Cart</a>
+            <a href="checkout.html" class="btn btn-sm btn-primary">Checkout</a>
+          </div>
+        </div>
+      `;
+      
+      // Update cart counter in navbar
+      updateCartCounter(cartData.items.length);
+      
+      // Show mini cart
+      showMiniCart(cartData);
       
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Failed to add item to cart. Please try again.');
+      cartMessage.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-circle"></i> Failed to add item to cart. Please try again.
+        </div>
+      `;
+    } finally {
+      // Re-enable the button
+      addToCartBtn.disabled = false;
+      addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+      
+      // Remove the message after 5 seconds
+      setTimeout(() => {
+        cartMessage.innerHTML = '';
+      }, 5000);
     }
+  }
+  
+  // Function to update cart counter
+  function updateCartCounter(count) {
+    let cartCounter = document.getElementById('cart-counter');
+    
+    if (!cartCounter) {
+      // Create the cart counter if it doesn't exist
+      const navButtons = document.querySelector('.nav-buttons');
+      if (navButtons) {
+        const cartLink = document.createElement('a');
+        cartLink.href = 'cart.html';
+        cartLink.className = 'cart-icon';
+        cartLink.innerHTML = '<i class="fas fa-shopping-cart"></i>';
+        
+        cartCounter = document.createElement('span');
+        cartCounter.id = 'cart-counter';
+        cartCounter.className = 'cart-counter';
+        
+        cartLink.appendChild(cartCounter);
+        navButtons.prepend(cartLink);
+      }
+    }
+    
+    if (cartCounter) {
+      cartCounter.textContent = count;
+      cartCounter.style.display = count > 0 ? 'flex' : 'none';
+    }
+  }
+  
+  // Function to show mini cart
+  function showMiniCart(cart) {
+    // Remove existing mini cart
+    const existingMiniCart = document.getElementById('mini-cart');
+    if (existingMiniCart) {
+      existingMiniCart.remove();
+    }
+    
+    // Create mini cart container
+    const miniCart = document.createElement('div');
+    miniCart.id = 'mini-cart';
+    miniCart.className = 'mini-cart';
+    
+    // Calculate total
+    const total = cart.totalAmount || cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Create mini cart content
+    let miniCartHTML = `
+      <div class="mini-cart-header">
+        <h3>Your Cart (${cart.items.length} items)</h3>
+        <button class="close-btn" onclick="document.getElementById('mini-cart').remove();">×</button>
+      </div>
+      <div class="mini-cart-items">
+    `;
+    
+    // Add cart items
+    if (cart.items.length > 0) {
+      cart.items.forEach(item => {
+        miniCartHTML += `
+          <div class="mini-cart-item">
+            <img src="${item.imageUrl || '../images/default-product.jpg'}" alt="${item.name}" class="mini-cart-item-img">
+            <div class="mini-cart-item-details">
+              <h4>${item.name}</h4>
+              <p>${formatPrice(item.price)} × ${item.quantity}</p>
+            </div>
+          </div>
+        `;
+      });
+    } else {
+      miniCartHTML += `<p class="empty-cart-message">Your cart is empty.</p>`;
+    }
+    
+    miniCartHTML += `
+      </div>
+      <div class="mini-cart-footer">
+        <div class="mini-cart-total">
+          <p>Total: <span>${formatPrice(total)}</span></p>
+        </div>
+        <div class="mini-cart-actions">
+          <a href="cart.html" class="btn btn-sm">View Cart</a>
+          <a href="checkout.html" class="btn btn-sm btn-primary">Checkout</a>
+        </div>
+      </div>
+    `;
+    
+    miniCart.innerHTML = miniCartHTML;
+    
+    // Add mini cart to the page
+    document.body.appendChild(miniCart);
+    
+    // Auto-hide mini cart after 5 seconds
+    setTimeout(() => {
+      const currentMiniCart = document.getElementById('mini-cart');
+      if (currentMiniCart) {
+        currentMiniCart.classList.add('fade-out');
+        setTimeout(() => {
+          if (currentMiniCart) {
+            currentMiniCart.remove();
+          }
+        }, 500);
+      }
+    }, 5000);
   }
 });
