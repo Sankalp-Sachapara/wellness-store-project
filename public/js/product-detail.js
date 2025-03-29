@@ -233,8 +233,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <p>Total: <span>${formatPrice(total)}</span></p>
         </div>
         <div class="mini-cart-actions">
-          <a href="cart.html" class="btn btn-sm">View Cart</a>
-          <a href="checkout.html" class="btn btn-sm btn-primary">Checkout</a>
+          <a href="cart.html" class="btn btn-secondary">View Cart</a>
+          <a href="checkout.html" class="btn btn-primary">Checkout</a>
         </div>
       </div>
     `;
