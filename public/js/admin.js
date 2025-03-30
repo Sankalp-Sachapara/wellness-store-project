@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if user is admin
   const user = checkAuthStatus();
   if (!user || !user.isAdmin) {
-    window.location.href = '/login.html';
+    window.location.href = '../login.html'; // Fixed the path from /login.html to ../login.html
     return;
   }
   
