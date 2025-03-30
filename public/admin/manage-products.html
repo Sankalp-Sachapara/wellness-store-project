@@ -18,6 +18,7 @@
         <li><a href="../index.html">Store Front</a></li>
         <li><a href="index.html">Dashboard</a></li>
         <li><a href="manage-products.html" class="active">Products</a></li>
+        <li><a href="manage-carts.html">Carts</a></li>
         <li><a href="manage-users.html">Users</a></li>
       </ul>
       <div class="nav-buttons">
@@ -31,6 +32,7 @@
       <ul class="admin-menu">
         <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
         <li><a href="manage-products.html" class="active"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="manage-carts.html"><i class="fas fa-shopping-cart"></i> Carts</a></li>
         <li><a href="manage-users.html"><i class="fas fa-users"></i> Users</a></li>
         <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
       </ul>
@@ -41,6 +43,9 @@
         <h2>Manage Products</h2>
         <button id="add-product-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Add New Product</button>
       </div>
+
+      <!-- Status message area for feedback -->
+      <div id="status-message" class="status-message" style="display: none;"></div>
 
       <div class="admin-card">
         <div class="filter-controls">
@@ -154,5 +159,116 @@
 
   <script src="../js/main.js"></script>
   <script src="../js/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add status message functionality
+      const statusMessage = document.getElementById('status-message');
+      
+      // Status message helper function
+      window.showStatusMessage = function(message, isError = false) {
+        statusMessage.textContent = message;
+        statusMessage.className = isError ? 'status-message error' : 'status-message success';
+        statusMessage.style.display = 'block';
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+          statusMessage.style.display = 'none';
+        }, 5000);
+      };
+      
+      // Override form submission to show feedback
+      const originalHandleProductSubmit = handleProductSubmit;
+      handleProductSubmit = async function(e) {
+        e.preventDefault();
+        
+        // Basic form validation can remain in the original function
+        
+        try {
+          const formEl = e.target;
+          const formData = new FormData(formEl);
+          const productData = {
+            name: formData.get('name').trim(),
+            description: formData.get('description').trim(),
+            price: parseFloat(formData.get('price')),
+            stock: parseInt(formData.get('stock')),
+            category: formData.get('category'),
+            imageUrl: formData.get('imageUrl').trim() || undefined
+          };
+          
+          // Validate inputs first
+          let isValid = true;
+          
+          if (!productData.name) {
+            displayErrorMessage(document.getElementById('name-error'), 'Product name is required');
+            isValid = false;
+          }
+          
+          if (!productData.description) {
+            displayErrorMessage(document.getElementById('description-error'), 'Description is required');
+            isValid = false;
+          }
+          
+          if (isNaN(productData.price) || productData.price < 0) {
+            displayErrorMessage(document.getElementById('price-error'), 'Please enter a valid price');
+            isValid = false;
+          }
+          
+          if (isNaN(productData.stock) || productData.stock < 0) {
+            displayErrorMessage(document.getElementById('stock-error'), 'Please enter a valid stock quantity');
+            isValid = false;
+          }
+          
+          if (!productData.category) {
+            displayErrorMessage(document.getElementById('category-error'), 'Please select a category');
+            isValid = false;
+          }
+          
+          if (!isValid) return;
+          
+          let response;
+          const productId = document.getElementById('product-id').value;
+          
+          if (productId) {
+            // Update existing product
+            response = await fetch(`${API_URL}/products/${productId}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(productData)
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to update product');
+            }
+            
+            showStatusMessage('Product updated successfully');
+          } else {
+            // Create new product
+            response = await fetch(`${API_URL}/products`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(productData)
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to create product');
+            }
+            
+            showStatusMessage('Product created successfully');
+          }
+          
+          // Close modal and refresh products
+          closeProductModal();
+          fetchProducts();
+        } catch (error) {
+          console.error('Error saving product:', error);
+          showStatusMessage('An error occurred while saving the product. Please try again.', true);
+        }
+      };
+    });
+  </script>
 </body>
 </html>
