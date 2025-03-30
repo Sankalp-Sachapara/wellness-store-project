@@ -51,9 +51,6 @@
           <li>
             <a href="manage-users.html"><i class="fas fa-users"></i> Users</a>
           </li>
-          <li>
-            <a href="#"><i class="fas fa-cog"></i> Settings</a>
-          </li>
         </ul>
       </div>
 
@@ -215,7 +212,7 @@
               document.getElementById("total-products").textContent =
                 products.length;
 
-              // Check for low stock products
+              // Check for low stock products (less than 10)
               const lowStockProducts = products.filter(
                 (product) => product.stock < 10
               );
@@ -248,19 +245,18 @@
               showStatusMessage("Failed to fetch carts data", true);
             }
 
-            // Fetch users if possible, otherwise use placeholder
+            // Fetch users
             try {
               const usersResponse = await fetch(`${API_URL}/users`);
               if (usersResponse.ok) {
                 const users = await usersResponse.json();
                 document.getElementById("total-users").textContent = users.length;
               } else {
-                // Fall back to placeholder value
-                document.getElementById("total-users").textContent = "15";
+                showStatusMessage("Failed to fetch users data", true);
               }
             } catch (error) {
-              // Fall back to placeholder value
-              document.getElementById("total-users").textContent = "15";
+              console.error("Error fetching users:", error);
+              showStatusMessage("Error loading users data", true);
             }
 
             // Try to fetch orders, fall back to placeholder data if needed
@@ -268,7 +264,12 @@
               const ordersResponse = await fetch(`${API_URL}/orders`);
               if (ordersResponse.ok) {
                 const orders = await ordersResponse.json();
-                displayOrders(orders.slice(0, 5)); // Show only 5 most recent
+                if (orders.length > 0) {
+                  displayOrders(orders.slice(0, 5)); // Show only 5 most recent
+                } else {
+                  // Display placeholder data if no orders
+                  displayRecentOrders();
+                }
               } else {
                 // Fall back to placeholder data
                 displayRecentOrders();
@@ -285,6 +286,12 @@
 
         function displayLowStockProducts(products) {
           const lowStockList = document.getElementById("low-stock-list");
+          
+          if (!products || products.length === 0) {
+            lowStockList.innerHTML = '<tr><td colspan="5">No low stock products found</td></tr>';
+            return;
+          }
+          
           let html = "";
 
           products.forEach((product) => {
