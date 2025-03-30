@@ -1,5 +1,15 @@
-// Base URL for API
-const API_URL = "http://localhost:5000/api";
+// Base URL for API - configurable for different environments
+const API_BASE_URL = {
+  development: "http://localhost:5000/api",
+  production: "https://wellness-store-api.example.com/api" // Change this to your production API URL
+};
+
+// Determine environment - can be extended with more sophisticated detection
+const isProduction = window.location.hostname !== "localhost" && 
+                    !window.location.hostname.includes("127.0.0.1");
+
+// Set the API URL based on environment
+const API_URL = isProduction ? API_BASE_URL.production : API_BASE_URL.development;
 
 // Helper functions
 function formatPrice(price) {
@@ -7,8 +17,12 @@ function formatPrice(price) {
 }
 
 function displayErrorMessage(element, message) {
-  element.textContent = message;
-  element.style.display = "block";
+  if (element) {
+    element.textContent = message;
+    element.style.display = "block";
+  } else {
+    console.error(`Error message element not found: ${message}`);
+  }
 }
 
 function clearErrorMessages() {
@@ -72,8 +86,9 @@ function checkAuthStatus() {
 function initializeCartIcon() {
   const navButtons = document.querySelector(".nav-buttons");
   const existingCartIcon = document.querySelector(".cart-icon");
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  if (!existingCartIcon && navButtons) {
+  if (!existingCartIcon && navButtons && user) {
     const cartLink = document.createElement("a");
     cartLink.href = "cart.html";
     cartLink.className = "cart-icon";
@@ -86,17 +101,19 @@ function initializeCartIcon() {
     navButtons.insertBefore(cartLink, navButtons.firstChild);
 
     // Load initial cart count
-    updateCartCount();
+    updateCartCount(user._id);
   }
 }
 
-async function updateCartCount() {
+async function updateCartCount(userId) {
+  if (!userId) return;
+  
   try {
-    const response = await fetch(`${API_URL}/carts/${user._id}`);
+    const response = await fetch(`${API_URL}/carts/${userId}`);
     if (!response.ok) return;
 
     const cart = await response.json();
-    const uniqueProductCount = cart.items.length; // Count of unique products
+    const uniqueProductCount = cart.items ? cart.items.length : 0; // Count of unique products
 
     const cartCounter = document.getElementById("cart-counter");
     if (cartCounter) {
@@ -108,7 +125,7 @@ async function updateCartCount() {
   }
 }
 
-// Update nav for logged in user (modified version)
+// Update nav for logged in user
 function updateNavForLoggedInUser(user) {
   const navButtons = document.querySelector(".nav-buttons");
 
@@ -117,7 +134,7 @@ function updateNavForLoggedInUser(user) {
       <span class="user-greeting">Hello, ${user.username}</span>
       ${
         user.isAdmin
-          ? '<a href="../admin/index.html" class="btn admin-btn">Admin Dashboard</a>'
+          ? '<a href="admin/index.html" class="btn admin-btn">Admin Dashboard</a>'
           : ""
       }
       <a href="#" id="logout-btn" class="btn logout-btn">Logout</a>
@@ -197,4 +214,36 @@ function createProductCard(product) {
       </div>
     </div>
   `;
+}
+
+// Error handling helper
+function handleApiError(error, errorMessage = "An error occurred") {
+  console.error(error);
+  return {
+    success: false,
+    message: errorMessage
+  };
+}
+
+// Show notification helper
+function showNotification(message, isError = false) {
+  // Create notification element if it doesn't exist
+  let notification = document.getElementById('notification');
+  
+  if (!notification) {
+    notification = document.createElement('div');
+    notification.id = 'notification';
+    notification.className = isError ? 'notification error' : 'notification success';
+    document.body.appendChild(notification);
+  } else {
+    notification.className = isError ? 'notification error' : 'notification success';
+  }
+  
+  notification.textContent = message;
+  notification.style.display = 'block';
+  
+  // Hide after 3 seconds
+  setTimeout(() => {
+    notification.style.display = 'none';
+  }, 3000);
 }
