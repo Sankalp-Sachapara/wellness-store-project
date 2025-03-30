@@ -40,7 +40,6 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     console.log(`Login attempt with email: ${email}`);
-    console.log(`Login attempt with password: ${password}`);
 
     // Find user by email
     const user = await User.findOne({ email });
@@ -116,5 +115,89 @@ exports.updateUserProfile = async (req, res) => {
     res.status(200).json(userResponse);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+// Get all users (admin only)
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update user (admin only)
+exports.updateUser = async (req, res) => {
+  try {
+    const { username, email, isAdmin } = req.body;
+    
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    // Update fields
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (isAdmin !== undefined) user.isAdmin = isAdmin;
+    
+    // Handle password change separately
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+    
+    const updatedUser = await user.save();
+    
+    res.status(200).json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+      createdAt: updatedUser.createdAt
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Delete user (admin only)
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    await User.findByIdAndDelete(req.params.id);
+    
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get user stats (admin only)
+exports.getUserStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const adminUsers = await User.countDocuments({ isAdmin: true });
+    const regularUsers = await User.countDocuments({ isAdmin: false });
+    
+    // Get recently joined users (last 30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentUsers = await User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } });
+    
+    res.status(200).json({
+      totalUsers,
+      adminUsers,
+      regularUsers,
+      recentUsers
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
