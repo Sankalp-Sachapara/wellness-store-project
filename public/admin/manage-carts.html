@@ -19,7 +19,7 @@
         <li><a href="index.html">Dashboard</a></li>
         <li><a href="manage-products.html">Products</a></li>
         <li><a href="manage-carts.html" class="active">Carts</a></li>
-        <li><a href="#">Users</a></li>
+        <li><a href="manage-users.html">Users</a></li>
       </ul>
       <div class="nav-buttons">
         <a href="#" id="admin-logout" class="btn logout-btn">Logout</a>
@@ -33,7 +33,7 @@
         <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
         <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
         <li><a href="manage-carts.html" class="active"><i class="fas fa-shopping-cart"></i> Carts</a></li>
-        <li><a href="#"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="manage-users.html"><i class="fas fa-users"></i> Users</a></li>
         <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
       </ul>
     </div>
@@ -50,6 +50,9 @@
           </select>
         </div>
       </div>
+
+      <!-- Status message area for feedback -->
+      <div id="status-message" class="status-message" style="display: none;"></div>
 
       <div class="active-carts">
         <h3>Active Shopping Carts</h3>
@@ -110,6 +113,7 @@
       const cartDetailModal = document.getElementById('cart-detail-modal');
       const cartDetailContent = document.getElementById('cart-detail-content');
       const closeModalBtn = document.querySelector('.close');
+      const statusMessage = document.getElementById('status-message');
       
       // Global variables
       let allCarts = [];
@@ -128,6 +132,18 @@
       
       closeModalBtn.addEventListener('click', closeModal);
       
+      // Status message helper function
+      function showStatusMessage(message, isError = false) {
+        statusMessage.textContent = message;
+        statusMessage.className = isError ? 'status-message error' : 'status-message success';
+        statusMessage.style.display = 'block';
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+          statusMessage.style.display = 'none';
+        }, 5000);
+      }
+      
       // Fetch carts data
       async function fetchCarts() {
         try {
@@ -142,6 +158,7 @@
         } catch (error) {
           console.error('Error fetching carts:', error);
           cartsList.innerHTML = `<tr><td colspan="6" class="error-message">Error loading carts. Please try again later.</td></tr>`;
+          showStatusMessage('Error loading carts. Please try again.', true);
         }
       }
       
@@ -168,10 +185,10 @@
               <td>${formatPrice(totalValue)}</td>
               <td>${lastUpdated}</td>
               <td class="action-buttons">
-                <button class="action-btn view-btn" data-cart-id="${cart._id}" onclick="viewCartDetails('${cart._id}')">
+                <button class="action-btn view-btn" data-cart-id="${cart._id}">
                   <i class="fas fa-eye"></i>
                 </button>
-                <button class="action-btn delete-btn" data-cart-id="${cart._id}" onclick="clearCartFromAdmin('${cart._id}')">
+                <button class="action-btn delete-btn" data-cart-id="${cart._id}" ${!hasItems ? 'disabled' : ''}>
                   <i class="fas fa-trash"></i>
                 </button>
               </td>
@@ -180,6 +197,21 @@
         });
         
         cartsList.innerHTML = cartsHTML;
+        
+        // Add event listeners to action buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const cartId = btn.getAttribute('data-cart-id');
+            viewCartDetails(cartId);
+          });
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const cartId = btn.getAttribute('data-cart-id');
+            clearCartFromAdmin(cartId);
+          });
+        });
       }
       
       // Filter carts
@@ -225,8 +257,8 @@
         }
       });
       
-      // Make function global for buttons
-      window.viewCartDetails = async function(cartId) {
+      // View cart details
+      async function viewCartDetails(cartId) {
         // Show modal
         cartDetailModal.style.display = 'block';
         cartDetailContent.innerHTML = `
@@ -254,16 +286,24 @@
             </div>
           `;
         }
-      };
+      }
       
       // Clear cart from admin
-      window.clearCartFromAdmin = async function(cartId) {
+      async function clearCartFromAdmin(cartId) {
         if (!confirm('Are you sure you want to clear this cart?')) {
           return;
         }
         
         try {
-          const response = await fetch(`${API_URL}/carts/${cartId}/clear`, {
+          // Find the cart to get the user ID
+          const cart = allCarts.find(cart => cart._id === cartId);
+          if (!cart) {
+            throw new Error('Cart not found');
+          }
+          
+          // Use the user ID for the clear endpoint
+          const userId = cart.user;
+          const response = await fetch(`${API_URL}/carts/${userId}/clear`, {
             method: 'DELETE'
           });
           
@@ -271,13 +311,15 @@
             throw new Error('Failed to clear cart');
           }
           
+          showStatusMessage('Cart cleared successfully');
+          
           // Refresh carts list
           await fetchCarts();
         } catch (error) {
           console.error('Error clearing cart:', error);
-          alert('Failed to clear cart. Please try again.');
+          showStatusMessage('Failed to clear cart. Please try again.', true);
         }
-      };
+      }
       
       // Display cart details in modal
       function displayCartDetails(cart) {
