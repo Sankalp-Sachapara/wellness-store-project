@@ -34,7 +34,6 @@
         <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
         <li><a href="manage-carts.html"><i class="fas fa-shopping-cart"></i> Carts</a></li>
         <li><a href="manage-users.html" class="active"><i class="fas fa-users"></i> Users</a></li>
-        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
       </ul>
     </div>
 
@@ -79,6 +78,57 @@
     </div>
   </main>
 
+  <!-- User Edit Modal -->
+  <div id="user-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modal-title">Edit User</h2>
+      <form id="user-form">
+        <input type="hidden" id="user-id">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required>
+          <span class="error-message" id="username-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+          <span class="error-message" id="email-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="password">Password (leave empty to keep current)</label>
+          <input type="password" id="password" name="password">
+          <span class="error-message" id="password-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="role">Role</label>
+          <select id="role" name="role">
+            <option value="user">Regular User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <span class="error-message" id="role-error"></span>
+        </div>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal">
+    <div class="modal-content delete-modal">
+      <span class="close">&times;</span>
+      <h2>Confirm Delete</h2>
+      <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+      <div class="form-buttons">
+        <button class="btn btn-secondary" id="cancel-delete-btn">Cancel</button>
+        <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/main.js"></script>
   <script src="../js/admin.js"></script>
   <script>
@@ -95,6 +145,17 @@
       const userSearch = document.getElementById('user-search');
       const roleFilter = document.getElementById('user-role-filter');
       const statusMessage = document.getElementById('status-message');
+      const userModal = document.getElementById('user-modal');
+      const deleteModal = document.getElementById('delete-modal');
+      const userForm = document.getElementById('user-form');
+      const modalTitle = document.getElementById('modal-title');
+      const cancelBtn = document.getElementById('cancel-btn');
+      const closeModalBtns = document.querySelectorAll('.close');
+      const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+      const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+      
+      let currentUserId = null;
+      let allUsers = [];
       
       // Status message helper function
       function showStatusMessage(message, isError = false) {
@@ -108,7 +169,7 @@
         }, 5000);
       }
       
-      // Fetch users data if API endpoint exists, otherwise show placeholder
+      // Fetch users data
       fetchUsers();
       
       // Event listeners
@@ -120,28 +181,41 @@
         roleFilter.addEventListener('change', filterUsers);
       }
       
+      if (userForm) {
+        userForm.addEventListener('submit', handleUserSubmit);
+      }
+      
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeUserModal);
+      }
+      
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', handleDeleteUser);
+      }
+      
+      if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+      }
+      
+      closeModalBtns.forEach(btn => btn.addEventListener('click', function() {
+        closeUserModal();
+        closeDeleteModal();
+      }));
+      
       async function fetchUsers() {
         try {
-          let userData = [];
+          const response = await fetch(`${API_URL}/users`);
           
-          try {
-            // Try to fetch users from API if endpoint exists
-            const response = await fetch(`${API_URL}/users`);
-            if (response.ok) {
-              userData = await response.json();
-              renderUsers(userData);
-            } else {
-              // If endpoint returns error, use placeholder data
-              renderPlaceholderUsers();
-            }
-          } catch (error) {
-            // If fetch fails, use placeholder data
-            console.log('Users API not implemented, using placeholder data');
-            renderPlaceholderUsers();
+          if (!response.ok) {
+            throw new Error('Failed to fetch users');
           }
+          
+          allUsers = await response.json();
+          renderUsers(allUsers);
         } catch (error) {
-          showStatusMessage('Error loading users data', true);
-          usersList.innerHTML = '<tr><td colspan="6">Error loading users. Please try again later.</td></tr>';
+          console.error('Error fetching users:', error);
+          usersList.innerHTML = '<tr><td colspan="6" class="error-message">Error loading users. Please try again later.</td></tr>';
+          showStatusMessage('Error loading users data. Please try again.', true);
         }
       }
       
@@ -150,48 +224,29 @@
         const searchTerm = userSearch.value.toLowerCase();
         const role = roleFilter.value;
         
-        // Get all user rows
-        const rows = usersList.querySelectorAll('tr:not(.loading-text)');
+        let filteredUsers = [...allUsers];
         
-        rows.forEach(row => {
-          const username = row.cells[1].textContent.toLowerCase();
-          const email = row.cells[2].textContent.toLowerCase();
-          const userRole = row.cells[3].textContent.toLowerCase();
-          
-          // Check if row matches filters
-          const matchesSearch = !searchTerm || 
-                                username.includes(searchTerm) || 
-                                email.includes(searchTerm);
-                                
-          const matchesRole = role === 'all' || 
-                             (role === 'admin' && userRole.includes('admin')) ||
-                             (role === 'user' && userRole.includes('user'));
-          
-          // Show/hide row based on filters
-          row.style.display = (matchesSearch && matchesRole) ? '' : 'none';
-        });
+        // Filter by search term
+        if (searchTerm) {
+          filteredUsers = filteredUsers.filter(user => 
+            user.username.toLowerCase().includes(searchTerm) || 
+            user.email.toLowerCase().includes(searchTerm)
+          );
+        }
         
-        // Check if any rows are visible
-        const visibleRows = usersList.querySelectorAll('tr:not([style*="display: none"])');
-        
-        if (visibleRows.length === 0) {
-          // Add a "no results" row if everything is filtered out
-          if (!usersList.querySelector('.no-results')) {
-            const noResultsRow = document.createElement('tr');
-            noResultsRow.className = 'no-results';
-            noResultsRow.innerHTML = '<td colspan="6">No users match your filters</td>';
-            usersList.appendChild(noResultsRow);
-          }
-        } else {
-          // Remove any "no results" row if we have visible rows
-          const noResultsRow = usersList.querySelector('.no-results');
-          if (noResultsRow) {
-            noResultsRow.remove();
+        // Filter by role
+        if (role !== 'all') {
+          if (role === 'admin') {
+            filteredUsers = filteredUsers.filter(user => user.isAdmin);
+          } else if (role === 'user') {
+            filteredUsers = filteredUsers.filter(user => !user.isAdmin);
           }
         }
+        
+        renderUsers(filteredUsers);
       }
       
-      // Render actual users data
+      // Render users
       function renderUsers(users) {
         if (!users || users.length === 0) {
           usersList.innerHTML = '<tr><td colspan="6">No users found.</td></tr>';
@@ -213,82 +268,176 @@
               <td><span class="${roleClass}">${roleDisplay}</span></td>
               <td>${joinedDate}</td>
               <td class="action-buttons">
-                <button class="action-btn view-btn"><i class="fas fa-eye"></i></button>
-                <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
+                <button class="action-btn edit-btn" data-id="${user._id}">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" data-id="${user._id}" ${user._id === currentUser._id ? 'disabled' : ''}>
+                  <i class="fas fa-trash"></i>
+                </button>
               </td>
             </tr>
           `;
         });
         
         usersList.innerHTML = usersHTML;
+        
+        // Add event listeners to action buttons
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const userId = btn.getAttribute('data-id');
+            showEditUserModal(userId);
+          });
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const userId = btn.getAttribute('data-id');
+            // Prevent deleting your own account
+            if (userId !== currentUser._id) {
+              showDeleteConfirmation(userId);
+            }
+          });
+        });
       }
       
-      // Render placeholder user data
-      function renderPlaceholderUsers() {
-        const placeholderUsers = [
-          {
-            id: '1',
-            username: 'admin',
-            email: 'admin@example.com',
-            isAdmin: true,
-            joinedDate: '2025-01-15'
-          },
-          {
-            id: '2',
-            username: 'john_doe',
-            email: 'john@example.com',
-            isAdmin: false,
-            joinedDate: '2025-02-20'
-          },
-          {
-            id: '3',
-            username: 'jane_smith',
-            email: 'jane@example.com',
-            isAdmin: false,
-            joinedDate: '2025-02-28'
-          },
-          {
-            id: '4',
-            username: 'support_team',
-            email: 'support@example.com',
-            isAdmin: true,
-            joinedDate: '2025-01-10'
-          },
-          {
-            id: '5',
-            username: 'test_user',
-            email: 'test@example.com',
-            isAdmin: false,
-            joinedDate: '2025-03-15'
-          }
-        ];
+      // Show edit user modal
+      function showEditUserModal(userId) {
+        const user = allUsers.find(u => u._id === userId);
         
-        let usersHTML = '';
+        if (!user) return;
         
-        placeholderUsers.forEach(user => {
-          const roleDisplay = user.isAdmin ? 'Admin' : 'Regular User';
-          const roleClass = user.isAdmin ? 'status-warning' : '';
-          
-          usersHTML += `
-            <tr data-username="${user.username}" data-email="${user.email}" data-role="${user.isAdmin ? 'admin' : 'user'}">
-              <td>${user.id}</td>
-              <td>${user.username}</td>
-              <td>${user.email}</td>
-              <td><span class="${roleClass}">${roleDisplay}</span></td>
-              <td>${user.joinedDate}</td>
-              <td class="action-buttons">
-                <button class="action-btn view-btn"><i class="fas fa-eye"></i></button>
-                <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
-              </td>
-            </tr>
-          `;
-        });
+        modalTitle.textContent = 'Edit User';
         
-        usersList.innerHTML = usersHTML;
+        document.getElementById('user-id').value = user._id;
+        document.getElementById('username').value = user.username;
+        document.getElementById('email').value = user.email;
+        document.getElementById('password').value = '';
+        document.getElementById('role').value = user.isAdmin ? 'admin' : 'user';
         
-        // Show message about placeholder data
-        showStatusMessage('User management API not fully implemented. Showing placeholder data.', false);
+        currentUserId = userId;
+        openUserModal();
       }
+      
+      // Handle user form submit
+      async function handleUserSubmit(e) {
+        e.preventDefault();
+        
+        // Clear error messages
+        clearErrorMessages();
+        
+        // Get form values
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const isAdmin = document.getElementById('role').value === 'admin';
+        
+        // Validate inputs
+        let isValid = true;
+        
+        if (!username) {
+          displayErrorMessage(document.getElementById('username-error'), 'Username is required');
+          isValid = false;
+        }
+        
+        if (!email) {
+          displayErrorMessage(document.getElementById('email-error'), 'Email is required');
+          isValid = false;
+        } else if (!validateEmail(email)) {
+          displayErrorMessage(document.getElementById('email-error'), 'Please enter a valid email address');
+          isValid = false;
+        }
+        
+        if (password && password.length < 6) {
+          displayErrorMessage(document.getElementById('password-error'), 'Password must be at least 6 characters');
+          isValid = false;
+        }
+        
+        if (!isValid) return;
+        
+        const userData = {
+          username,
+          email,
+          isAdmin
+        };
+        
+        // Add password only if provided
+        if (password) {
+          userData.password = password;
+        }
+        
+        try {
+          const response = await fetch(`${API_URL}/users/${currentUserId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to update user');
+          }
+          
+          // Close modal and refresh users
+          closeUserModal();
+          showStatusMessage('User updated successfully');
+          
+          // Refresh the user list
+          fetchUsers();
+        } catch (error) {
+          console.error('Error updating user:', error);
+          showStatusMessage('An error occurred while updating the user. Please try again.', true);
+        }
+      }
+      
+      // Show delete confirmation
+      function showDeleteConfirmation(userId) {
+        currentUserId = userId;
+        deleteModal.style.display = 'block';
+      }
+      
+      // Handle delete user
+      async function handleDeleteUser() {
+        if (!currentUserId) return;
+        
+        try {
+          const response = await fetch(`${API_URL}/users/${currentUserId}`, {
+            method: 'DELETE'
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to delete user');
+          }
+          
+          // Close modal and refresh users
+          closeDeleteModal();
+          showStatusMessage('User deleted successfully');
+          fetchUsers();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          showStatusMessage('An error occurred while deleting the user. Please try again.', true);
+        }
+      }
+      
+      // Open user modal
+      function openUserModal() {
+        userModal.style.display = 'block';
+      }
+      
+      // Close user modal
+      function closeUserModal() {
+        userModal.style.display = 'none';
+        clearErrorMessages();
+        userForm.reset();
+      }
+      
+      // Close delete modal
+      function closeDeleteModal() {
+        deleteModal.style.display = 'none';
+      }
+      
+      // Get current logged in user
+      const currentUser = JSON.parse(localStorage.getItem('user'));
     });
   </script>
 </body>
