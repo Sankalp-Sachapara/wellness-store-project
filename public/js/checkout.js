@@ -1,24 +1,23 @@
 // Checkout page functionality
 document.addEventListener('DOMContentLoaded', () => {
-  // Get DOM elements for steps
-  const step1 = document.getElementById('step-1');
-  const step2 = document.getElementById('step-2');
-  const step3 = document.getElementById('step-3');
-  
-  // Get DOM elements for buttons
+  // Get DOM elements
+  const billingForm = document.getElementById('billing-form');
   const toReviewBtn = document.getElementById('to-review-btn');
   const backToBillingBtn = document.getElementById('back-to-billing-btn');
   const placeOrderBtn = document.getElementById('place-order-btn');
   
-  // Get DOM elements for step indicators
-  const stepIndicators = document.querySelectorAll('.step');
+  const step1Content = document.getElementById('step-1');
+  const step2Content = document.getElementById('step-2');
+  const step3Content = document.getElementById('step-3');
   
-  // Get DOM elements for order details
-  const billingDetailsElement = document.getElementById('billing-details');
-  const orderItemsElement = document.getElementById('order-items');
-  const reviewSubtotalElement = document.getElementById('review-subtotal');
-  const reviewTotalElement = document.getElementById('review-total');
-  const orderNumberElement = document.getElementById('order-number');
+  const reviewSubtotal = document.getElementById('review-subtotal');
+  const reviewTotal = document.getElementById('review-total');
+  
+  const billingDetails = document.getElementById('billing-details');
+  const orderItems = document.getElementById('order-items');
+  const orderNumber = document.getElementById('order-number');
+  
+  const steps = document.querySelectorAll('.step');
   
   // Ensure user is logged in
   const user = checkAuthStatus();
@@ -27,35 +26,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   
-  // Get form elements
-  const billingForm = document.getElementById('billing-form');
-  
-  // Initialize form data
-  let formData = {};
-  
-  // Fetch cart data
-  fetchCart();
+  // Initialize the checkout process
+  initCheckout();
   
   // Add event listeners
   if (toReviewBtn) {
-    toReviewBtn.addEventListener('click', goToReview);
+    toReviewBtn.addEventListener('click', validateBillingAndProceed);
   }
   
   if (backToBillingBtn) {
-    backToBillingBtn.addEventListener('click', goToBilling);
+    backToBillingBtn.addEventListener('click', goToStep1);
   }
   
   if (placeOrderBtn) {
     placeOrderBtn.addEventListener('click', placeOrder);
   }
   
-  if (billingForm) {
-    billingForm.addEventListener('submit', (e) => e.preventDefault());
-  }
-  
-  // Fetch user's cart
-  async function fetchCart() {
+  // Initialize checkout
+  async function initCheckout() {
     try {
+      // Fetch user's cart
       const response = await fetch(`${API_URL}/carts/${user._id}`);
       
       if (!response.ok) {
@@ -65,93 +55,75 @@ document.addEventListener('DOMContentLoaded', () => {
       const cart = await response.json();
       
       if (!cart.items || cart.items.length === 0) {
+        // Redirect to cart page if cart is empty
         window.location.href = 'cart.html';
         return;
       }
+      
+      // Pre-fill billing information if available
+      prefillBillingInfo();
+      
+      // Show step 1
+      goToStep1();
+      
     } catch (error) {
-      console.error('Error fetching cart:', error);
-      alert('Failed to load your cart. Please try again.');
+      console.error('Error initializing checkout:', error);
+      alert('Error loading your cart. Please try again later.');
       window.location.href = 'cart.html';
     }
   }
   
-  // Go to review step
-  function goToReview() {
-    // Validate form first
-    if (!validateBillingForm()) {
-      return;
+  // Pre-fill billing information from user data
+  function prefillBillingInfo() {
+    if (user.email) {
+      document.getElementById('email').value = user.email;
     }
     
-    // Collect form data
-    formData = {
-      firstName: document.getElementById('firstName').value.trim(),
-      lastName: document.getElementById('lastName').value.trim(),
-      email: document.getElementById('email').value.trim(),
-      phone: document.getElementById('phone').value.trim(),
-      address: document.getElementById('address').value.trim(),
-      city: document.getElementById('city').value.trim(),
-      state: document.getElementById('state').value.trim(),
-      zipCode: document.getElementById('zipCode').value.trim(),
-      country: document.getElementById('country').value
-    };
-    
-    // Update billing details in review
-    updateBillingDetails();
-    
-    // Fetch cart and update order items
-    fetchAndUpdateOrderItems();
-    
-    // Show step 2
-    step1.classList.remove('active');
-    step2.classList.add('active');
-    step3.classList.remove('active');
-    
-    // Update step indicators
-    stepIndicators[0].classList.add('active');
-    stepIndicators[1].classList.add('active');
-    stepIndicators[2].classList.remove('active');
-    
-    // Scroll to top
-    window.scrollTo(0, 0);
+    // Try to get saved billing info from localStorage
+    const savedBillingInfo = localStorage.getItem('billingInfo');
+    if (savedBillingInfo) {
+      const billingInfo = JSON.parse(savedBillingInfo);
+      
+      document.getElementById('firstName').value = billingInfo.firstName || '';
+      document.getElementById('lastName').value = billingInfo.lastName || '';
+      document.getElementById('phone').value = billingInfo.phone || '';
+      document.getElementById('address').value = billingInfo.address || '';
+      document.getElementById('city').value = billingInfo.city || '';
+      document.getElementById('state').value = billingInfo.state || '';
+      document.getElementById('zipCode').value = billingInfo.zipCode || '';
+      document.getElementById('country').value = billingInfo.country || 'USA';
+    }
   }
   
-  // Go back to billing step
-  function goToBilling() {
-    // Show step 1
-    step1.classList.add('active');
-    step2.classList.remove('active');
-    step3.classList.remove('active');
-    
-    // Update step indicators
-    stepIndicators[0].classList.add('active');
-    stepIndicators[1].classList.remove('active');
-    stepIndicators[2].classList.remove('active');
-    
-    // Scroll to top
-    window.scrollTo(0, 0);
-  }
-  
-  // Validate billing form
-  function validateBillingForm() {
-    // Reset previous error messages
+  // Validate billing form and proceed to review
+  function validateBillingAndProceed() {
+    // Clear previous error messages
     clearErrorMessages();
     
+    // Get form values
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const state = document.getElementById('state').value.trim();
+    const zipCode = document.getElementById('zipCode').value.trim();
+    const country = document.getElementById('country').value;
+    
+    // Validate inputs
     let isValid = true;
     
-    // Validate first name
-    if (!document.getElementById('firstName').value.trim()) {
+    if (!firstName) {
       displayErrorMessage(document.getElementById('firstName-error'), 'First name is required');
       isValid = false;
     }
     
-    // Validate last name
-    if (!document.getElementById('lastName').value.trim()) {
+    if (!lastName) {
       displayErrorMessage(document.getElementById('lastName-error'), 'Last name is required');
       isValid = false;
     }
     
-    // Validate email
-    const email = document.getElementById('email').value.trim();
     if (!email) {
       displayErrorMessage(document.getElementById('email-error'), 'Email is required');
       isValid = false;
@@ -160,64 +132,78 @@ document.addEventListener('DOMContentLoaded', () => {
       isValid = false;
     }
     
-    // Validate phone
-    if (!document.getElementById('phone').value.trim()) {
+    if (!phone) {
       displayErrorMessage(document.getElementById('phone-error'), 'Phone number is required');
       isValid = false;
     }
     
-    // Validate address
-    if (!document.getElementById('address').value.trim()) {
+    if (!address) {
       displayErrorMessage(document.getElementById('address-error'), 'Address is required');
       isValid = false;
     }
     
-    // Validate city
-    if (!document.getElementById('city').value.trim()) {
+    if (!city) {
       displayErrorMessage(document.getElementById('city-error'), 'City is required');
       isValid = false;
     }
     
-    // Validate state
-    if (!document.getElementById('state').value.trim()) {
-      displayErrorMessage(document.getElementById('state-error'), 'State/Province is required');
+    if (!state) {
+      displayErrorMessage(document.getElementById('state-error'), 'State is required');
       isValid = false;
     }
     
-    // Validate zip code
-    if (!document.getElementById('zipCode').value.trim()) {
+    if (!zipCode) {
       displayErrorMessage(document.getElementById('zipCode-error'), 'ZIP/Postal code is required');
       isValid = false;
     }
     
-    // Validate country
-    if (!document.getElementById('country').value) {
+    if (!country) {
       displayErrorMessage(document.getElementById('country-error'), 'Country is required');
       isValid = false;
     }
     
-    return isValid;
+    if (isValid) {
+      // Save billing info to localStorage
+      const billingInfo = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        country
+      };
+      
+      localStorage.setItem('billingInfo', JSON.stringify(billingInfo));
+      
+      // Proceed to review step
+      goToStep2(billingInfo);
+    }
   }
   
-  // Update billing details in review step
-  function updateBillingDetails() {
-    const billingHTML = `
-      <div class="billing-detail"><strong>Name:</strong> ${formData.firstName} ${formData.lastName}</div>
-      <div class="billing-detail"><strong>Email:</strong> ${formData.email}</div>
-      <div class="billing-detail"><strong>Phone:</strong> ${formData.phone}</div>
-      <div class="billing-detail"><strong>Address:</strong> ${formData.address}</div>
-      <div class="billing-detail"><strong>City:</strong> ${formData.city}</div>
-      <div class="billing-detail"><strong>State:</strong> ${formData.state}</div>
-      <div class="billing-detail"><strong>ZIP/Postal Code:</strong> ${formData.zipCode}</div>
-      <div class="billing-detail"><strong>Country:</strong> ${formData.country}</div>
-    `;
+  // Go to billing info step
+  function goToStep1() {
+    // Update active step
+    steps.forEach((step, index) => {
+      if (index === 0) {
+        step.classList.add('active');
+      } else {
+        step.classList.remove('active');
+      }
+    });
     
-    billingDetailsElement.innerHTML = billingHTML;
+    // Show step 1 content
+    step1Content.classList.add('active');
+    step2Content.classList.remove('active');
+    step3Content.classList.remove('active');
   }
   
-  // Fetch cart and update order items in review step
-  async function fetchAndUpdateOrderItems() {
+  // Go to review order step
+  async function goToStep2(billingInfo) {
     try {
+      // Fetch cart data for review
       const response = await fetch(`${API_URL}/carts/${user._id}`);
       
       if (!response.ok) {
@@ -231,69 +217,296 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
-      let orderItemsHTML = '';
-      
-      cart.items.forEach(item => {
-        orderItemsHTML += `
-          <div class="review-item">
-            <img src="${item.imageUrl || 'images/default-product.jpg'}" alt="${item.name}">
-            <div class="review-item-info">
-              <h4>${item.name}</h4>
-              <p>Quantity: ${item.quantity}</p>
-            </div>
-            <div class="review-item-price">${formatPrice(item.price * item.quantity)}</div>
-          </div>
-        `;
+      // Update active step
+      steps.forEach((step, index) => {
+        if (index <= 1) {
+          step.classList.add('active');
+        } else {
+          step.classList.remove('active');
+        }
       });
       
-      orderItemsElement.innerHTML = orderItemsHTML;
+      // Show step 2 content
+      step1Content.classList.remove('active');
+      step2Content.classList.add('active');
+      step3Content.classList.remove('active');
       
-      // Update totals
-      reviewSubtotalElement.textContent = formatPrice(cart.totalAmount);
-      reviewTotalElement.textContent = formatPrice(cart.totalAmount);
+      // Render billing details
+      renderBillingDetails(billingInfo);
+      
+      // Render order items
+      renderOrderItems(cart.items);
+      
+      // Update order summary
+      updateOrderSummary(cart.totalAmount);
+      
     } catch (error) {
-      console.error('Error fetching cart:', error);
-      alert('Failed to load your cart. Please try again.');
+      console.error('Error loading review data:', error);
+      alert('Error loading review data. Please try again later.');
     }
+  }
+  
+  // Go to confirmation step
+  function goToStep3(orderData) {
+    // Update active step
+    steps.forEach((step) => {
+      step.classList.add('active');
+    });
+    
+    // Show step 3 content
+    step1Content.classList.remove('active');
+    step2Content.classList.remove('active');
+    step3Content.classList.add('active');
+    
+    // Set order number
+    orderNumber.textContent = orderData.orderNumber;
+  }
+  
+  // Render billing details
+  function renderBillingDetails(billingInfo) {
+    billingDetails.innerHTML = `
+      <div class="billing-detail"><strong>Name:</strong> ${billingInfo.firstName} ${billingInfo.lastName}</div>
+      <div class="billing-detail"><strong>Email:</strong> ${billingInfo.email}</div>
+      <div class="billing-detail"><strong>Phone:</strong> ${billingInfo.phone}</div>
+      <div class="billing-detail"><strong>Address:</strong> ${billingInfo.address}</div>
+      <div class="billing-detail"><strong>City:</strong> ${billingInfo.city}</div>
+      <div class="billing-detail"><strong>State:</strong> ${billingInfo.state}</div>
+      <div class="billing-detail"><strong>ZIP/Postal Code:</strong> ${billingInfo.zipCode}</div>
+      <div class="billing-detail"><strong>Country:</strong> ${billingInfo.country}</div>
+    `;
+  }
+  
+  // Render order items
+  function renderOrderItems(items) {
+    let itemsHTML = '';
+    
+    items.forEach(item => {
+      itemsHTML += `
+        <div class="review-item">
+          <img src="${item.imageUrl || 'images/default-product.jpg'}" alt="${item.name}">
+          <div class="review-item-info">
+            <h4>${item.name}</h4>
+            <p>Quantity: ${item.quantity}</p>
+            <p>Price: ${formatPrice(item.price)} each</p>
+          </div>
+          <div class="review-item-price">${formatPrice(item.price * item.quantity)}</div>
+        </div>
+      `;
+    });
+    
+    orderItems.innerHTML = itemsHTML;
+  }
+  
+  // Update order summary
+  function updateOrderSummary(total) {
+    reviewSubtotal.textContent = formatPrice(total);
+    reviewTotal.textContent = formatPrice(total);
   }
   
   // Place order
   async function placeOrder() {
     try {
+      // Get billing info from localStorage
+      const billingInfo = JSON.parse(localStorage.getItem('billingInfo'));
+      
+      if (!billingInfo) {
+        alert('Billing information is missing. Please go back and fill out the form.');
+        goToStep1();
+        return;
+      }
+      
+      // Create order
       const response = await fetch(`${API_URL}/orders/${user._id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ billingInfo: formData })
+        body: JSON.stringify({ billingInfo })
       });
       
       if (!response.ok) {
         throw new Error('Failed to place order');
       }
       
-      const order = await response.json();
+      const orderData = await response.json();
       
-      // Show order number in confirmation
-      if (orderNumberElement) {
-        orderNumberElement.textContent = order.order.orderNumber;
-      }
+      // Show confirmation
+      goToStep3(orderData.order);
       
-      // Show step 3
-      step1.classList.remove('active');
-      step2.classList.remove('active');
-      step3.classList.add('active');
-      
-      // Update step indicators
-      stepIndicators[0].classList.add('active');
-      stepIndicators[1].classList.add('active');
-      stepIndicators[2].classList.add('active');
-      
-      // Scroll to top
-      window.scrollTo(0, 0);
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('Failed to place your order. Please try again.');
+      alert('Error placing order. Please try again later.');
     }
   }
 });
+// Checkout page functionality - Part 2: Form Validation and Order Placement
+// This code extends checkout.js with additional functionality
+
+// Form validation and Billing Information handling
+function validateBillingAndContinue() {
+  // Get DOM elements - Forms
+  const billingForm = document.getElementById('billing-form');
+  
+  // Get form values
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const city = document.getElementById('city').value.trim();
+  const state = document.getElementById('state').value.trim();
+  const zipCode = document.getElementById('zipCode').value.trim();
+  const country = document.getElementById('country').value;
+  
+  // Clear previous error messages
+  clearErrorMessages();
+  
+  // Validate form fields
+  let isValid = true;
+  
+  if (!firstName) {
+    displayErrorMessage(document.getElementById('firstName-error'), 'First name is required');
+    isValid = false;
+  }
+  
+  if (!lastName) {
+    displayErrorMessage(document.getElementById('lastName-error'), 'Last name is required');
+    isValid = false;
+  }
+  
+  if (!email) {
+    displayErrorMessage(document.getElementById('email-error'), 'Email is required');
+    isValid = false;
+  } else if (!validateEmail(email)) {
+    displayErrorMessage(document.getElementById('email-error'), 'Please enter a valid email address');
+    isValid = false;
+  }
+  
+  if (!phone) {
+    displayErrorMessage(document.getElementById('phone-error'), 'Phone number is required');
+    isValid = false;
+  }
+  
+  if (!address) {
+    displayErrorMessage(document.getElementById('address-error'), 'Address is required');
+    isValid = false;
+  }
+  
+  if (!city) {
+    displayErrorMessage(document.getElementById('city-error'), 'City is required');
+    isValid = false;
+  }
+  
+  if (!state) {
+    displayErrorMessage(document.getElementById('state-error'), 'State/Province is required');
+    isValid = false;
+  }
+  
+  if (!zipCode) {
+    displayErrorMessage(document.getElementById('zipCode-error'), 'ZIP/Postal code is required');
+    isValid = false;
+  }
+  
+  if (!country) {
+    displayErrorMessage(document.getElementById('country-error'), 'Country is required');
+    isValid = false;
+  }
+  
+  // If validation passes, proceed to next step
+  if (isValid) {
+    // Save billing info
+    const billingInfo = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      address,
+      city,
+      state,
+      zipCode,
+      country
+    };
+    
+    // Store billing info in session storage
+    sessionStorage.setItem('billingInfo', JSON.stringify(billingInfo));
+    
+    // Populate billing details in review step
+    populateBillingDetails(billingInfo);
+    
+    // Show review step
+    showStep(2);
+  }
+}
+
+// Populate billing details in review step
+function populateBillingDetails(billingInfo) {
+  const billingDetails = document.getElementById('billing-details');
+  if (!billingDetails) return;
+  
+  const html = `
+    <div class="billing-detail"><strong>Name:</strong> ${billingInfo.firstName} ${billingInfo.lastName}</div>
+    <div class="billing-detail"><strong>Email:</strong> ${billingInfo.email}</div>
+    <div class="billing-detail"><strong>Phone:</strong> ${billingInfo.phone}</div>
+    <div class="billing-detail"><strong>Address:</strong> ${billingInfo.address}</div>
+    <div class="billing-detail"><strong>City:</strong> ${billingInfo.city}</div>
+    <div class="billing-detail"><strong>State/Province:</strong> ${billingInfo.state}</div>
+    <div class="billing-detail"><strong>ZIP/Postal Code:</strong> ${billingInfo.zipCode}</div>
+    <div class="billing-detail"><strong>Country:</strong> ${billingInfo.country}</div>
+  `;
+  
+  billingDetails.innerHTML = html;
+}
+
+// Place order
+async function placeOrder() {
+  // Get user info
+  const user = checkAuthStatus();
+  if (!user) {
+    window.location.href = 'login.html?redirect=checkout.html';
+    return;
+  }
+  
+  // Get billing info from session storage
+  const billingInfoJson = sessionStorage.getItem('billingInfo');
+  if (!billingInfoJson) {
+    alert('Billing information is missing. Please fill in your billing details.');
+    showStep(1);
+    return;
+  }
+  
+  const billingInfo = JSON.parse(billingInfoJson);
+  
+  try {
+    // Create order
+    const response = await fetch(`${API_URL}/orders/${user._id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        billingInfo
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to place order');
+    }
+    
+    const order = await response.json();
+    
+    // Show confirmation with order number
+    const orderNumber = document.getElementById('order-number');
+    if (orderNumber) {
+      orderNumber.textContent = order.order.orderNumber;
+    }
+    
+    // Clear billing info from session storage
+    sessionStorage.removeItem('billingInfo');
+    
+    // Show confirmation step
+    showStep(3);
+  } catch (error) {
+    console.error('Error placing order:', error);
+    alert('Failed to place order. Please try again.');
+  }
+}
