@@ -281,6 +281,14 @@
   font-weight: 500;
 }
 
+/* User ID in cart management */
+.user-id {
+  color: #666;
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 3px;
+}
+
 /* Modal styles refinements */
 .modal {
   display: none;
