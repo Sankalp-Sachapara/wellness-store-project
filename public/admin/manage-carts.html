@@ -34,7 +34,6 @@
         <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
         <li><a href="manage-carts.html" class="active"><i class="fas fa-shopping-cart"></i> Carts</a></li>
         <li><a href="manage-users.html"><i class="fas fa-users"></i> Users</a></li>
-        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
       </ul>
     </div>
 
@@ -117,9 +116,13 @@
       
       // Global variables
       let allCarts = [];
+      let allUsers = [];
       
       // Fetch all carts
       fetchCarts();
+      
+      // Try to fetch users to display names instead of IDs
+      fetchUsers();
       
       // Event listeners
       if (cartSearch) {
@@ -158,8 +161,33 @@
         } catch (error) {
           console.error('Error fetching carts:', error);
           cartsList.innerHTML = `<tr><td colspan="6" class="error-message">Error loading carts. Please try again later.</td></tr>`;
-          showStatusMessage('Error loading carts. Please try again.', true);
+          showStatusMessage('Error loading carts data', true);
         }
+      }
+      
+      // Fetch users for mapping IDs to names
+      async function fetchUsers() {
+        try {
+          const response = await fetch(`${API_URL}/users`);
+          
+          if (response.ok) {
+            allUsers = await response.json();
+            // If carts are already rendered, update them with user names
+            if (allCarts.length > 0) {
+              renderCarts(allCarts);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching users:', error);
+        }
+      }
+      
+      // Get username from user ID
+      function getUsernameById(userId) {
+        if (!allUsers || allUsers.length === 0) return userId;
+        
+        const user = allUsers.find(u => u._id === userId);
+        return user ? user.username : userId;
       }
       
       // Render carts table
@@ -176,11 +204,12 @@
           const totalItems = hasItems ? cart.items.length : 0;
           const totalValue = hasItems ? cart.totalAmount : 0;
           const lastUpdated = new Date(cart.updatedAt).toLocaleString();
+          const userName = getUsernameById(cart.user);
           
           cartsHTML += `
             <tr>
               <td>${cart._id}</td>
-              <td>${cart.user}</td>
+              <td>${userName} ${userName !== cart.user ? `<span class="user-id">(${cart.user})</span>` : ''}</td>
               <td>${totalItems}</td>
               <td>${formatPrice(totalValue)}</td>
               <td>${lastUpdated}</td>
@@ -223,10 +252,20 @@
         
         // Filter by search term
         if (searchTerm) {
-          filteredCarts = filteredCarts.filter(cart => 
-            cart._id.toLowerCase().includes(searchTerm) || 
-            cart.user.toLowerCase().includes(searchTerm)
-          );
+          filteredCarts = filteredCarts.filter(cart => {
+            const userIdMatches = cart.user.toLowerCase().includes(searchTerm);
+            
+            // Check if we can match by username
+            let userNameMatches = false;
+            if (allUsers && allUsers.length > 0) {
+              const user = allUsers.find(u => u._id === cart.user);
+              if (user) {
+                userNameMatches = user.username.toLowerCase().includes(searchTerm);
+              }
+            }
+            
+            return userIdMatches || userNameMatches;
+          });
         }
         
         // Filter by status
@@ -296,7 +335,7 @@
         
         try {
           // Find the cart to get the user ID
-          const cart = allCarts.find(cart => cart._id === cartId);
+          const cart = allCarts.find(c => c._id === cartId);
           if (!cart) {
             throw new Error('Cart not found');
           }
@@ -325,11 +364,12 @@
       function displayCartDetails(cart) {
         const hasItems = cart.items && cart.items.length > 0;
         const lastUpdated = new Date(cart.updatedAt).toLocaleString();
+        const userName = getUsernameById(cart.user);
         
         let detailsHTML = `
           <div class="cart-info">
             <p><strong>Cart ID:</strong> ${cart._id}</p>
-            <p><strong>User ID:</strong> ${cart.user}</p>
+            <p><strong>User:</strong> ${userName} ${userName !== cart.user ? `(${cart.user})` : ''}</p>
             <p><strong>Last Updated:</strong> ${lastUpdated}</p>
             <p><strong>Items:</strong> ${hasItems ? cart.items.length : 0}</p>
             <p><strong>Total Value:</strong> ${formatPrice(cart.totalAmount || 0)}</p>
