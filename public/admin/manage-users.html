@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users - Health & Wellness Store</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <h1>HealthHub Admin</h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../index.html">Store Front</a></li>
+        <li><a href="index.html">Dashboard</a></li>
+        <li><a href="manage-products.html">Products</a></li>
+        <li><a href="manage-carts.html">Carts</a></li>
+        <li><a href="manage-users.html" class="active">Users</a></li>
+      </ul>
+      <div class="nav-buttons">
+        <a href="#" id="admin-logout" class="btn logout-btn">Logout</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-sidebar">
+      <ul class="admin-menu">
+        <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="manage-carts.html"><i class="fas fa-shopping-cart"></i> Carts</a></li>
+        <li><a href="manage-users.html" class="active"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+      </ul>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-header">
+        <h2>Manage Users</h2>
+        <div class="filters">
+          <input type="text" id="user-search" placeholder="Search users..." class="search-input">
+          <select id="user-role-filter" class="filter-select">
+            <option value="all">All Roles</option>
+            <option value="admin">Admins</option>
+            <option value="user">Regular Users</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Status message area for feedback -->
+      <div id="status-message" class="status-message" style="display: none;"></div>
+
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-list">
+              <!-- Users will be loaded dynamically -->
+              <tr>
+                <td colspan="6" class="loading-text">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check if user is admin
+      const user = checkAuthStatus();
+      if (!user || !user.isAdmin) {
+        window.location.href = "../login.html";
+        return;
+      }
+      
+      // Elements
+      const usersList = document.getElementById('users-list');
+      const userSearch = document.getElementById('user-search');
+      const roleFilter = document.getElementById('user-role-filter');
+      const statusMessage = document.getElementById('status-message');
+      
+      // Status message helper function
+      function showStatusMessage(message, isError = false) {
+        statusMessage.textContent = message;
+        statusMessage.className = isError ? 'status-message error' : 'status-message success';
+        statusMessage.style.display = 'block';
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+          statusMessage.style.display = 'none';
+        }, 5000);
+      }
+      
+      // Fetch users data if API endpoint exists, otherwise show placeholder
+      fetchUsers();
+      
+      // Event listeners
+      if (userSearch) {
+        userSearch.addEventListener('input', filterUsers);
+      }
+      
+      if (roleFilter) {
+        roleFilter.addEventListener('change', filterUsers);
+      }
+      
+      async function fetchUsers() {
+        try {
+          let userData = [];
+          
+          try {
+            // Try to fetch users from API if endpoint exists
+            const response = await fetch(`${API_URL}/users`);
+            if (response.ok) {
+              userData = await response.json();
+              renderUsers(userData);
+            } else {
+              // If endpoint returns error, use placeholder data
+              renderPlaceholderUsers();
+            }
+          } catch (error) {
+            // If fetch fails, use placeholder data
+            console.log('Users API not implemented, using placeholder data');
+            renderPlaceholderUsers();
+          }
+        } catch (error) {
+          showStatusMessage('Error loading users data', true);
+          usersList.innerHTML = '<tr><td colspan="6">Error loading users. Please try again later.</td></tr>';
+        }
+      }
+      
+      // Filter users based on search term and role
+      function filterUsers() {
+        const searchTerm = userSearch.value.toLowerCase();
+        const role = roleFilter.value;
+        
+        // Get all user rows
+        const rows = usersList.querySelectorAll('tr:not(.loading-text)');
+        
+        rows.forEach(row => {
+          const username = row.cells[1].textContent.toLowerCase();
+          const email = row.cells[2].textContent.toLowerCase();
+          const userRole = row.cells[3].textContent.toLowerCase();
+          
+          // Check if row matches filters
+          const matchesSearch = !searchTerm || 
+                                username.includes(searchTerm) || 
+                                email.includes(searchTerm);
+                                
+          const matchesRole = role === 'all' || 
+                             (role === 'admin' && userRole.includes('admin')) ||
+                             (role === 'user' && userRole.includes('user'));
+          
+          // Show/hide row based on filters
+          row.style.display = (matchesSearch && matchesRole) ? '' : 'none';
+        });
+        
+        // Check if any rows are visible
+        const visibleRows = usersList.querySelectorAll('tr:not([style*="display: none"])');
+        
+        if (visibleRows.length === 0) {
+          // Add a "no results" row if everything is filtered out
+          if (!usersList.querySelector('.no-results')) {
+            const noResultsRow = document.createElement('tr');
+            noResultsRow.className = 'no-results';
+            noResultsRow.innerHTML = '<td colspan="6">No users match your filters</td>';
+            usersList.appendChild(noResultsRow);
+          }
+        } else {
+          // Remove any "no results" row if we have visible rows
+          const noResultsRow = usersList.querySelector('.no-results');
+          if (noResultsRow) {
+            noResultsRow.remove();
+          }
+        }
+      }
+      
+      // Render actual users data
+      function renderUsers(users) {
+        if (!users || users.length === 0) {
+          usersList.innerHTML = '<tr><td colspan="6">No users found.</td></tr>';
+          return;
+        }
+        
+        let usersHTML = '';
+        
+        users.forEach(user => {
+          const joinedDate = new Date(user.createdAt).toLocaleDateString();
+          const roleDisplay = user.isAdmin ? 'Admin' : 'Regular User';
+          const roleClass = user.isAdmin ? 'status-warning' : '';
+          
+          usersHTML += `
+            <tr>
+              <td>${user._id}</td>
+              <td>${user.username}</td>
+              <td>${user.email}</td>
+              <td><span class="${roleClass}">${roleDisplay}</span></td>
+              <td>${joinedDate}</td>
+              <td class="action-buttons">
+                <button class="action-btn view-btn"><i class="fas fa-eye"></i></button>
+                <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        usersList.innerHTML = usersHTML;
+      }
+      
+      // Render placeholder user data
+      function renderPlaceholderUsers() {
+        const placeholderUsers = [
+          {
+            id: '1',
+            username: 'admin',
+            email: 'admin@example.com',
+            isAdmin: true,
+            joinedDate: '2025-01-15'
+          },
+          {
+            id: '2',
+            username: 'john_doe',
+            email: 'john@example.com',
+            isAdmin: false,
+            joinedDate: '2025-02-20'
+          },
+          {
+            id: '3',
+            username: 'jane_smith',
+            email: 'jane@example.com',
+            isAdmin: false,
+            joinedDate: '2025-02-28'
+          },
+          {
+            id: '4',
+            username: 'support_team',
+            email: 'support@example.com',
+            isAdmin: true,
+            joinedDate: '2025-01-10'
+          },
+          {
+            id: '5',
+            username: 'test_user',
+            email: 'test@example.com',
+            isAdmin: false,
+            joinedDate: '2025-03-15'
+          }
+        ];
+        
+        let usersHTML = '';
+        
+        placeholderUsers.forEach(user => {
+          const roleDisplay = user.isAdmin ? 'Admin' : 'Regular User';
+          const roleClass = user.isAdmin ? 'status-warning' : '';
+          
+          usersHTML += `
+            <tr data-username="${user.username}" data-email="${user.email}" data-role="${user.isAdmin ? 'admin' : 'user'}">
+              <td>${user.id}</td>
+              <td>${user.username}</td>
+              <td>${user.email}</td>
+              <td><span class="${roleClass}">${roleDisplay}</span></td>
+              <td>${user.joinedDate}</td>
+              <td class="action-buttons">
+                <button class="action-btn view-btn"><i class="fas fa-eye"></i></button>
+                <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        usersList.innerHTML = usersHTML;
+        
+        // Show message about placeholder data
+        showStatusMessage('User management API not fully implemented. Showing placeholder data.', false);
+      }
+    });
+  </script>
+</body>
+</html>
