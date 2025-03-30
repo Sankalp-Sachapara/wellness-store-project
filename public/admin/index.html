@@ -22,7 +22,7 @@
           <li><a href="index.html" class="active">Dashboard</a></li>
           <li><a href="manage-products.html">Products</a></li>
           <li><a href="manage-carts.html">Carts</a></li>
-          <li><a href="#">Users</a></li>
+          <li><a href="manage-users.html">Users</a></li>
         </ul>
         <div class="nav-buttons">
           <a href="#" id="admin-logout" class="btn logout-btn">Logout</a>
@@ -49,7 +49,7 @@
             >
           </li>
           <li>
-            <a href="#"><i class="fas fa-users"></i> Users</a>
+            <a href="manage-users.html"><i class="fas fa-users"></i> Users</a>
           </li>
           <li>
             <a href="#"><i class="fas fa-cog"></i> Settings</a>
@@ -62,6 +62,9 @@
           <h2>Dashboard</h2>
           <div class="date-display" id="current-date"></div>
         </div>
+
+        <!-- Status message area for feedback -->
+        <div id="status-message" class="status-message" style="display: none;"></div>
 
         <div class="stats-grid">
           <div class="stat-card">
@@ -167,6 +170,19 @@
     <script src="../js/admin.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
+        // Status message helper function
+        const statusMessage = document.getElementById('status-message');
+        function showStatusMessage(message, isError = false) {
+          statusMessage.textContent = message;
+          statusMessage.className = isError ? 'status-message error' : 'status-message success';
+          statusMessage.style.display = 'block';
+          
+          // Hide after 5 seconds
+          setTimeout(() => {
+            statusMessage.style.display = 'none';
+          }, 5000);
+        }
+
         // Display current date
         const today = new Date();
         const options = {
@@ -210,6 +226,8 @@
               if (lowStockProducts.length > 0) {
                 displayLowStockProducts(lowStockProducts);
               }
+            } else {
+              showStatusMessage("Failed to fetch products data", true);
             }
 
             // Fetch carts
@@ -226,16 +244,42 @@
 
               // Display active carts
               displayActiveCarts(activeCarts.slice(0, 5)); // Show only 5 most recent
+            } else {
+              showStatusMessage("Failed to fetch carts data", true);
             }
 
-            // In a real app, we would fetch users and orders data here
-            // For this demo, we'll use placeholder values
-            document.getElementById("total-users").textContent = "15";
+            // Fetch users if possible, otherwise use placeholder
+            try {
+              const usersResponse = await fetch(`${API_URL}/users`);
+              if (usersResponse.ok) {
+                const users = await usersResponse.json();
+                document.getElementById("total-users").textContent = users.length;
+              } else {
+                // Fall back to placeholder value
+                document.getElementById("total-users").textContent = "15";
+              }
+            } catch (error) {
+              // Fall back to placeholder value
+              document.getElementById("total-users").textContent = "15";
+            }
 
-            // Display placeholder recent orders
-            displayRecentOrders();
+            // Try to fetch orders, fall back to placeholder data if needed
+            try {
+              const ordersResponse = await fetch(`${API_URL}/orders`);
+              if (ordersResponse.ok) {
+                const orders = await ordersResponse.json();
+                displayOrders(orders.slice(0, 5)); // Show only 5 most recent
+              } else {
+                // Fall back to placeholder data
+                displayRecentOrders();
+              }
+            } catch (error) {
+              // Fall back to placeholder data
+              displayRecentOrders();
+            }
           } catch (error) {
             console.error("Error fetching dashboard data:", error);
+            showStatusMessage("Error loading dashboard data", true);
           }
         }
 
@@ -296,6 +340,54 @@
           });
 
           activeCartsList.innerHTML = html;
+        }
+
+        function displayOrders(orders) {
+          const recentOrdersList = document.getElementById("recent-orders-list");
+          
+          if (!orders || orders.length === 0) {
+            recentOrdersList.innerHTML = '<tr><td colspan="6">No recent orders found</td></tr>';
+            return;
+          }
+          
+          let html = "";
+          
+          orders.forEach((order) => {
+            const orderDate = new Date(order.createdAt).toLocaleDateString();
+            let statusClass = "";
+            
+            switch (order.status.toLowerCase()) {
+              case "delivered":
+                statusClass = "status-success";
+                break;
+              case "processing":
+                statusClass = "status-warning";
+                break;
+              case "shipped":
+                statusClass = "status-info";
+                break;
+              case "cancelled":
+                statusClass = "status-danger";
+                break;
+              default:
+                statusClass = "";
+            }
+            
+            html += `
+            <tr>
+              <td>${order.orderNumber}</td>
+              <td>${order.user}</td>
+              <td>${orderDate}</td>
+              <td><span class="${statusClass}">${order.status}</span></td>
+              <td>${formatPrice(order.totalAmount)}</td>
+              <td>
+                <button class="action-btn view-btn"><i class="fas fa-eye"></i></button>
+              </td>
+            </tr>
+          `;
+          });
+          
+          recentOrdersList.innerHTML = html;
         }
 
         function displayRecentOrders() {
