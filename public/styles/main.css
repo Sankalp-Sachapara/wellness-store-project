@@ -1210,3 +1210,242 @@ header .cart-counter.empty {
   font-weight: 500;
   color: var(--primary-color);
 }
+
+/* Authentication Forms */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  background-color: var(--light-gray);
+}
+
+.auth-form-container {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.auth-form-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: var(--text-color);
+}
+
+.auth-form .form-group {
+  margin-bottom: 20px;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--medium-gray);
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.auth-form .error-message {
+  color: var(--error-color);
+  font-size: 14px;
+  margin-top: 5px;
+  display: block;
+}
+
+.auth-form .btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 18px;
+}
+
+.form-message {
+  text-align: center;
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+.auth-redirect {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: var(--white);
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 600px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.close {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--primary-color);
+}
+
+.delete-modal {
+  max-width: 400px;
+  text-align: center;
+}
+
+.delete-modal p {
+  margin: 20px 0;
+}
+
+/* Login/Register Specific Styles */
+.login-page, .register-page {
+  background-color: var(--light-gray);
+  min-height: calc(100vh - 60px);
+  padding: 60px 20px;
+}
+
+.login-container, .register-container {
+  background-color: var(--white);
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h1, .register-container h1 {
+  margin-bottom: 30px;
+  font-size: 2rem;
+  color: var(--text-color);
+}
+
+.login-form label, .register-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.login-form input, .register-form input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--medium-gray);
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.login-form button, .register-form button {
+  width: 100px;
+  padding: 12px;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.login-form button:hover, .register-form button:hover {
+  background-color: var(--primary-dark);
+}
+
+.login-redirect, .register-redirect {
+  margin-top: 20px;
+}
+
+.login-redirect a, .register-redirect a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.login-redirect a:hover, .register-redirect a:hover {
+  text-decoration: underline;
+}
+
+/* Admin Dashboard Modal */
+.admin-modal .modal-content {
+  padding: 30px;
+}
+
+.admin-modal h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+.admin-modal label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.admin-modal input, 
+.admin-modal textarea,
+.admin-modal select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid var(--medium-gray);
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.admin-modal textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.admin-modal .btn-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.admin-modal .btn {
+  min-width: 100px;
+}
+
+.admin-modal .btn-cancel {
+  background-color: var(--medium-gray);
+  color: var(--text-color);
+}
+
+.admin-modal .btn-cancel:hover {
+  background-color: var(--dark-gray);
+  color: var(--white);
+}
+
+.admin-modal .btn-primary {
+  background-color: var(--primary-color);
+}
+
+.admin-modal .btn-primary:hover {
+  background-color: var(--primary-dark);
+}
