@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Details - Admin Dashboard</title>
+  <link rel="stylesheet" href="../styles/main.css">
+  <link rel="stylesheet" href="../styles/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <a href="../index.html"><h1>HealthHub Admin</h1></a>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../index.html">Store Front</a></li>
+        <li><a href="index.html">Dashboard</a></li>
+        <li><a href="manage-products.html">Products</a></li>
+        <li><a href="manage-carts.html">Carts</a></li>
+        <li><a href="manage-users.html">Users</a></li>
+      </ul>
+      <div class="nav-buttons">
+        <a href="#" id="admin-logout" class="btn logout-btn">Logout</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-sidebar">
+      <ul class="admin-menu">
+        <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="manage-products.html"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="manage-carts.html"><i class="fas fa-shopping-cart"></i> Carts</a></li>
+        <li><a href="manage-users.html"><i class="fas fa-users"></i> Users</a></li>
+      </ul>
+    </div>
+
+    <div class="admin-content">
+      <div class="admin-header">
+        <h2>Order Details</h2>
+        <a href="index.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+      </div>
+
+      <!-- Status message area for feedback -->
+      <div id="status-message" class="status-message" style="display: none;"></div>
+
+      <div class="admin-card">
+        <div class="order-details-header">
+          <div id="order-basic-info">
+            <h3>Order #<span id="order-id">Loading...</span></h3>
+            <p>Date: <span id="order-date">Loading...</span></p>
+            <p>Status: <span id="order-status" class="status-info">Loading...</span></p>
+          </div>
+          <div id="order-customer-info">
+            <h3>Customer Details</h3>
+            <p>Name: <span id="customer-name">Loading...</span></p>
+            <p>Email: <span id="customer-email">Loading...</span></p>
+            <p>Phone: <span id="customer-phone">Loading...</span></p>
+          </div>
+        </div>
+
+        <h3>Order Items</h3>
+        <div class="table-responsive">
+          <table class="admin-table" id="order-items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Unit Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="order-items-list">
+              <!-- Order items will be loaded dynamically -->
+              <tr>
+                <td colspan="4" class="loading-text">Loading order items...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="order-summary">
+          <div class="order-summary-row">
+            <span>Subtotal:</span>
+            <span id="order-subtotal">$0.00</span>
+          </div>
+          <div class="order-summary-row">
+            <span>Shipping:</span>
+            <span id="order-shipping">$0.00</span>
+          </div>
+          <div class="order-summary-row">
+            <span>Tax:</span>
+            <span id="order-tax">$0.00</span>
+          </div>
+          <div class="order-summary-row total">
+            <span>Total:</span>
+            <span id="order-total">$0.00</span>
+          </div>
+        </div>
+
+        <div class="shipping-address">
+          <h3>Shipping Address</h3>
+          <div id="shipping-address-details">
+            <p>Loading address...</p>
+          </div>
+        </div>
+
+        <div class="order-actions">
+          <button id="update-status-btn" class="btn btn-primary">Update Status</button>
+          <button id="print-order-btn" class="btn btn-secondary"><i class="fas fa-print"></i> Print Order</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Update Status Modal -->
+  <div id="status-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Update Order Status</h2>
+      <form id="status-form">
+        <div class="form-group">
+          <label for="order-status-select">Status</label>
+          <select id="order-status-select" name="status" required>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="status-notes">Notes (Optional)</label>
+          <textarea id="status-notes" name="notes" rows="3"></textarea>
+        </div>
+        <div class="form-buttons">
+          <button type="button" class="btn btn-secondary" id="cancel-status-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Status</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check if user is admin
+      const user = checkAuthStatus();
+      if (!user || !user.isAdmin) {
+        window.location.href = '../login.html';
+        return;
+      }
+
+      // Status message setup
+      const statusMessage = document.getElementById('status-message');
+      function showStatusMessage(message, isError = false) {
+        statusMessage.textContent = message;
+        statusMessage.className = isError ? 'status-message error' : 'status-message success';
+        statusMessage.style.display = 'block';
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+          statusMessage.style.display = 'none';
+        }, 5000);
+      }
+
+      // Get order ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('id');
+      
+      if (!orderId) {
+        showStatusMessage('No order ID provided', true);
+        return;
+      }
+
+      // Display order ID
+      document.getElementById('order-id').textContent = orderId;
+
+      // Fetch order details
+      fetchOrderDetails(orderId);
+
+      // Modal functionality
+      const statusModal = document.getElementById('status-modal');
+      const updateStatusBtn = document.getElementById('update-status-btn');
+      const cancelStatusBtn = document.getElementById('cancel-status-btn');
+      const closeBtn = document.querySelector('#status-modal .close');
+      const statusForm = document.getElementById('status-form');
+      const printOrderBtn = document.getElementById('print-order-btn');
+
+      updateStatusBtn.addEventListener('click', () => {
+        statusModal.style.display = 'block';
+        // Pre-select current status
+        const currentStatus = document.getElementById('order-status').textContent.toLowerCase();
+        document.getElementById('order-status-select').value = currentStatus;
+      });
+
+      cancelStatusBtn.addEventListener('click', () => {
+        statusModal.style.display = 'none';
+      });
+
+      closeBtn.addEventListener('click', () => {
+        statusModal.style.display = 'none';
+      });
+
+      statusForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const newStatus = document.getElementById('order-status-select').value;
+        const notes = document.getElementById('status-notes').value;
+        
+        try {
+          // This would be a real API call in a production environment
+          // const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+          //   method: 'PUT',
+          //   headers: {
+          //     'Content-Type': 'application/json'
+          //   },
+          //   body: JSON.stringify({ status: newStatus, notes })
+          // });
+          
+          // if (!response.ok) {
+          //   throw new Error('Failed to update order status');
+          // }
+          
+          // Simulate successful update
+          document.getElementById('order-status').textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+          
+          // Update status class
+          const statusElement = document.getElementById('order-status');
+          statusElement.className = ''; // Clear existing classes
+          
+          switch (newStatus) {
+            case 'delivered':
+              statusElement.classList.add('status-success');
+              break;
+            case 'processing':
+              statusElement.classList.add('status-warning');
+              break;
+            case 'shipped':
+              statusElement.classList.add('status-info');
+              break;
+            case 'cancelled':
+              statusElement.classList.add('status-danger');
+              break;
+          }
+          
+          showStatusMessage('Order status updated successfully');
+          statusModal.style.display = 'none';
+        } catch (error) {
+          console.error('Error updating order status:', error);
+          showStatusMessage('Error updating order status', true);
+        }
+      });
+
+      printOrderBtn.addEventListener('click', () => {
+        window.print();
+      });
+
+      async function fetchOrderDetails(orderId) {
+        try {
+          // In a real scenario, this would be a fetch call to your API
+          // const response = await fetch(`${API_URL}/orders/${orderId}`);
+          // if (!response.ok) {
+          //   throw new Error('Failed to fetch order details');
+          // }
+          // const orderData = await response.json();
+          
+          // For demonstration, use sample data
+          const orderData = getSampleOrderData(orderId);
+          
+          // Populate order details
+          displayOrderDetails(orderData);
+        } catch (error) {
+          console.error('Error fetching order details:', error);
+          showStatusMessage('Error loading order details', true);
+        }
+      }
+
+      function displayOrderDetails(order) {
+        // Basic order info
+        document.getElementById('order-date').textContent = new Date(order.date).toLocaleDateString();
+        
+        const statusElement = document.getElementById('order-status');
+        statusElement.textContent = order.status;
+        statusElement.className = ''; // Clear existing classes
+        
+        switch (order.status.toLowerCase()) {
+          case 'delivered':
+            statusElement.classList.add('status-success');
+            break;
+          case 'processing':
+            statusElement.classList.add('status-warning');
+            break;
+          case 'shipped':
+            statusElement.classList.add('status-info');
+            break;
+          case 'cancelled':
+            statusElement.classList.add('status-danger');
+            break;
+        }
+        
+        // Customer info
+        document.getElementById('customer-name').textContent = order.customer.name;
+        document.getElementById('customer-email').textContent = order.customer.email;
+        document.getElementById('customer-phone').textContent = order.customer.phone;
+        
+        // Order items
+        const orderItemsList = document.getElementById('order-items-list');
+        let itemsHTML = '';
+        
+        order.items.forEach(item => {
+          const itemTotal = item.price * item.quantity;
+          itemsHTML += `
+            <tr>
+              <td>
+                <div class="order-product">
+                  <img src="${item.imageUrl || '../images/default-product.jpg'}" alt="${item.name}">
+                  <div>
+                    <strong>${item.name}</strong>
+                    <small>${item.category}</small>
+                  </div>
+                </div>
+              </td>
+              <td>${formatPrice(item.price)}</td>
+              <td>${item.quantity}</td>
+              <td>${formatPrice(itemTotal)}</td>
+            </tr>
+          `;
+        });
+        
+        orderItemsList.innerHTML = itemsHTML;
+        
+        // Order summary
+        document.getElementById('order-subtotal').textContent = formatPrice(order.subtotal);
+        document.getElementById('order-shipping').textContent = formatPrice(order.shipping);
+        document.getElementById('order-tax').textContent = formatPrice(order.tax);
+        document.getElementById('order-total').textContent = formatPrice(order.total);
+        
+        // Shipping address
+        const shippingAddressElement = document.getElementById('shipping-address-details');
+        const address = order.shippingAddress;
+        shippingAddressElement.innerHTML = `
+          <p>${address.line1}</p>
+          ${address.line2 ? `<p>${address.line2}</p>` : ''}
+          <p>${address.city}, ${address.state} ${address.zipCode}</p>
+          <p>${address.country}</p>
+        `;
+      }
+
+      function getSampleOrderData(orderId) {
+        // This is sample data for demonstration
+        return {
+          id: orderId,
+          date: '2025-03-25',
+          status: 'Processing',
+          customer: {
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            phone: '(123) 456-7890'
+          },
+          items: [
+            {
+              id: '1',
+              name: 'Whey Protein Powder',
+              category: 'Supplements',
+              price: 49.99,
+              quantity: 1,
+              imageUrl: '../images/supplements.jpg'
+            },
+            {
+              id: '2',
+              name: 'Organic Green Tea',
+              category: 'Nutrition',
+              price: 14.99,
+              quantity: 2,
+              imageUrl: '../images/nutrition.jpg'
+            }
+          ],
+          subtotal: 79.97,
+          shipping: 5.99,
+          tax: 6.39,
+          total: 92.35,
+          shippingAddress: {
+            line1: '123 Main Street',
+            line2: 'Apt 4B',
+            city: 'New York',
+            state: 'NY',
+            zipCode: '10001',
+            country: 'United States'
+          }
+        };
+      }
+    });
+  </script>
+</body>
+</html>
