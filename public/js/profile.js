@@ -52,23 +52,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (preferencesForm) {
-    preferencesForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      updatePreferences(user._id);
-    });
-  }
+  // if (preferencesForm) {
+  //   preferencesForm.addEventListener("submit", (e) => {
+  //     e.preventDefault();
+  //     updatePreferences(user._id);
+  //   });
+  // }
 
-  // Change avatar
-  if (changeAvatarBtn && avatarUpload) {
-    changeAvatarBtn.addEventListener("click", () => avatarUpload.click());
-    avatarUpload.addEventListener("change", handleAvatarUpload);
-  }
+  // // Change avatar
+  // if (changeAvatarBtn && avatarUpload) {
+  //   changeAvatarBtn.addEventListener("click", () => avatarUpload.click());
+  //   avatarUpload.addEventListener("change", handleAvatarUpload);
+  // }
 
-  // Add address
-  if (addAddressBtn) {
-    addAddressBtn.addEventListener("click", showAddAddressForm);
-  }
+  // // Add address
+  // if (addAddressBtn) {
+  //   addAddressBtn.addEventListener("click", showAddAddressForm);
+  // }
 
   // Functions
   async function loadProfileData(userId) {
@@ -84,20 +84,20 @@ document.addEventListener("DOMContentLoaded", () => {
       const userData = await response.json();
 
       // Populate form fields
-      document.getElementById("first-name").value = userData.firstName || "";
-      document.getElementById("last-name").value = userData.lastName || "";
+      document.getElementById("first-name").value = userData.username || "";
+      // document.getElementById("last-name").value = userData.lastName || "";
       document.getElementById("email").value = userData.email || "";
-      document.getElementById("phone").value = userData.phone || "";
-      document.getElementById("birthdate").value = userData.birthdate || "";
+      // document.getElementById("phone").value = userData.phone || "";
+      // document.getElementById("birthdate").value = userData.birthdate || "";
 
-      if (userData.avatar) {
-        profilePicture.src = userData.avatar;
-      }
+      // if (userData.avatar) {
+      //   profilePicture.src = userData.avatar;
+      // }
 
-      // Load addresses if they exist in the user data
-      if (userData.addresses) {
-        renderAddresses(userData.addresses);
-      }
+      // // Load addresses if they exist in the user data
+      // if (userData.addresses) {
+      //   renderAddresses(userData.addresses);
+      // }
     } catch (error) {
       console.error("Error loading profile data:", error);
       showErrorMessage("Failed to load profile data");
@@ -114,9 +114,9 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         body: JSON.stringify({
           firstName: document.getElementById("first-name").value,
-          lastName: document.getElementById("last-name").value,
+          // lastName: document.getElementById("last-name").value,
           phone: document.getElementById("phone").value,
-          birthdate: document.getElementById("birthdate").value,
+          // birthdate: document.getElementById("birthdate").value,
         }),
       });
 

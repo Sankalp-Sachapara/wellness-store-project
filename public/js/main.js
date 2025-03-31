@@ -156,6 +156,50 @@ function updateNavForLoggedInUser(user) {
   const navButtons = document.querySelector(".nav-buttons");
 
   if (navButtons) {
+    // Admin panel specific check - use simple logout button in admin pages
+    if (window.location.pathname.includes('/admin/')) {
+      navButtons.innerHTML = `
+        <div class="user-dropdown">
+          <div class="user-greeting">
+            Hello, ${user.username} <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="dropdown-menu">
+            <a href="index.html" class="dropdown-item">
+              <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" id="admin-logout" class="dropdown-item">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          </div>
+        </div>
+      `;
+
+      // Add dropdown toggle functionality
+      const userDropdown = document.querySelector(".user-dropdown");
+      const greeting = document.querySelector(".user-greeting");
+
+      greeting.addEventListener("click", (e) => {
+        e.stopPropagation();
+        userDropdown.classList.toggle("active");
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener("click", () => {
+        userDropdown.classList.remove("active");
+      });
+
+      const adminLogoutBtn = document.getElementById("admin-logout");
+      if (adminLogoutBtn) {
+        adminLogoutBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          logout();
+        });
+      }
+      return;
+    }
+
+    // For non-admin pages, keep the existing dropdown with all options
     navButtons.innerHTML = `
       <div class="user-dropdown">
         <div class="user-greeting">
@@ -168,19 +212,18 @@ function updateNavForLoggedInUser(user) {
           <a href="orders.html" class="dropdown-item">
             <i class="fas fa-shopping-bag"></i> My Orders
           </a>
-          ${
-            user.isAdmin
-              ? `
+          ${user.isAdmin
+        ? `
             <div class="dropdown-divider"></div>
             <a href="admin/index.html" class="dropdown-item">
               <i class="fas fa-cog"></i> Admin Dashboard
             </a>
           `
-              : ""
-          }
+        : ""
+      }
           <div class="dropdown-divider"></div>
           <a href="#" id="logout-btn" class="dropdown-item">
-            <i class="fas fa-sign-out-alt">Logout</i> 
+            <i class="fas fa-sign-out-alt"></i> Logout
           </a>
         </div>
       </div>
@@ -259,17 +302,15 @@ function getUrlParameter(name) {
 function createProductCard(product) {
   return `
     <div class="product-card">
-      <img src="${product.imageUrl || "images/default-product.jpg"}" alt="${
-    product.name
-  }" class="product-img">
+      <img src="${product.imageUrl || "images/default-product.jpg"}" alt="${product.name
+    }" class="product-img">
       <div class="product-info">
         <h3 class="product-title">${product.name}</h3>
         <p class="product-category">${product.category}</p>
         <p class="product-price">${formatPrice(product.price)}</p>
         <div class="product-rating">${getStarRating(product.rating)}</div>
-        <a href="product-detail.html?id=${
-          product._id
-        }" class="btn">View Details</a>
+        <a href="product-detail.html?id=${product._id
+    }" class="btn">View Details</a>
       </div>
     </div>
   `;
