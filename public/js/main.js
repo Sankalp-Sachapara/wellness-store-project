@@ -1,15 +1,18 @@
 // Base URL for API - configurable for different environments
 const API_BASE_URL = {
   development: "http://localhost:5000/api",
-  production: "https://wellness-store-api.example.com/api" // Change this to your production API URL
+  production: "https://wellness-store-api.example.com/api", // Change this to your production API URL
 };
 
 // Determine environment - can be extended with more sophisticated detection
-const isProduction = window.location.hostname !== "localhost" && 
-                    !window.location.hostname.includes("127.0.0.1");
+const isProduction =
+  window.location.hostname !== "localhost" &&
+  !window.location.hostname.includes("127.0.0.1");
 
 // Set the API URL based on environment
-const API_URL = isProduction ? API_BASE_URL.production : API_BASE_URL.development;
+const API_URL = isProduction
+  ? API_BASE_URL.production
+  : API_BASE_URL.development;
 
 // Helper functions
 function formatPrice(price) {
@@ -107,7 +110,7 @@ function initializeCartIcon() {
 
 async function updateCartCount(userId) {
   if (!userId) return;
-  
+
   try {
     const response = await fetch(`${API_URL}/carts/${userId}`);
     if (!response.ok) return;
@@ -126,26 +129,82 @@ async function updateCartCount(userId) {
 }
 
 // Update nav for logged in user
+// function updateNavForLoggedInUser(user) {
+//   const navButtons = document.querySelector(".nav-buttons");
+
+//   if (navButtons) {
+//     navButtons.innerHTML = `
+//       <span class="user-greeting">Hello, ${user.username}</span>
+//       ${
+//         user.isAdmin
+//           ? '<a href="admin/index.html" class="btn admin-btn">Admin Dashboard</a>'
+//           : ""
+//       }
+//       <a href="#" id="logout-btn" class="btn logout-btn">Logout</a>
+//     `;
+
+//     // Reinitialize cart icon after updating buttons
+//     initializeCartIcon();
+
+//     document
+//       .getElementById("logout-btn")
+//       .addEventListener("click", handleLogout);
+//   }
+// }
+
 function updateNavForLoggedInUser(user) {
   const navButtons = document.querySelector(".nav-buttons");
 
   if (navButtons) {
     navButtons.innerHTML = `
-      <span class="user-greeting">Hello, ${user.username}</span>
-      ${
-        user.isAdmin
-          ? '<a href="admin/index.html" class="btn admin-btn">Admin Dashboard</a>'
-          : ""
-      }
-      <a href="#" id="logout-btn" class="btn logout-btn">Logout</a>
+      <div class="user-dropdown">
+        <div class="user-greeting">
+          Hello, ${user.username} <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="dropdown-menu">
+          <a href="profile.html" class="dropdown-item">
+            <i class="fas fa-user"></i> My Profile
+          </a>
+          <a href="orders.html" class="dropdown-item">
+            <i class="fas fa-shopping-bag"></i> My Orders
+          </a>
+          ${
+            user.isAdmin
+              ? `
+            <div class="dropdown-divider"></div>
+            <a href="admin/index.html" class="dropdown-item">
+              <i class="fas fa-cog"></i> Admin Dashboard
+            </a>
+          `
+              : ""
+          }
+          <div class="dropdown-divider"></div>
+          <a href="#" id="logout-btn" class="dropdown-item">
+            <i class="fas fa-sign-out-alt">Logout</i> 
+          </a>
+        </div>
+      </div>
     `;
 
-    // Reinitialize cart icon after updating buttons
-    initializeCartIcon();
+    // Add dropdown toggle functionality
+    const userDropdown = document.querySelector(".user-dropdown");
+    const greeting = document.querySelector(".user-greeting");
 
-    document
-      .getElementById("logout-btn")
-      .addEventListener("click", handleLogout);
+    greeting.addEventListener("click", (e) => {
+      e.stopPropagation();
+      userDropdown.classList.toggle("active");
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", () => {
+      userDropdown.classList.remove("active");
+    });
+
+    // Add logout handler
+    document.getElementById("logout-btn").addEventListener("click", (e) => {
+      e.preventDefault();
+      handleLogout(e);
+    });
   }
 }
 
@@ -221,29 +280,33 @@ function handleApiError(error, errorMessage = "An error occurred") {
   console.error(error);
   return {
     success: false,
-    message: errorMessage
+    message: errorMessage,
   };
 }
 
 // Show notification helper
 function showNotification(message, isError = false) {
   // Create notification element if it doesn't exist
-  let notification = document.getElementById('notification');
-  
+  let notification = document.getElementById("notification");
+
   if (!notification) {
-    notification = document.createElement('div');
-    notification.id = 'notification';
-    notification.className = isError ? 'notification error' : 'notification success';
+    notification = document.createElement("div");
+    notification.id = "notification";
+    notification.className = isError
+      ? "notification error"
+      : "notification success";
     document.body.appendChild(notification);
   } else {
-    notification.className = isError ? 'notification error' : 'notification success';
+    notification.className = isError
+      ? "notification error"
+      : "notification success";
   }
-  
+
   notification.textContent = message;
-  notification.style.display = 'block';
-  
+  notification.style.display = "block";
+
   // Hide after 3 seconds
   setTimeout(() => {
-    notification.style.display = 'none';
+    notification.style.display = "none";
   }, 3000);
 }
