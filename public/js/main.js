@@ -93,7 +93,11 @@ function initializeCartIcon() {
 
   if (!existingCartIcon && navButtons && user) {
     const cartLink = document.createElement("a");
-    cartLink.href = "cart.html";
+    if (window.location.pathname.includes("/admin/")) {
+      cartLink.href = "../cart.html"; // Adjust path for admin pages
+    } else {
+      cartLink.href = "cart.html";
+    }
     cartLink.className = "cart-icon";
     cartLink.innerHTML = `
       <i class="fas fa-shopping-cart"></i>
@@ -157,7 +161,7 @@ function updateNavForLoggedInUser(user) {
 
   if (navButtons) {
     // Admin panel specific check - use simple logout button in admin pages
-    if (window.location.pathname.includes('/admin/')) {
+    if (window.location.pathname.includes("/admin/")) {
       navButtons.innerHTML = `
         <div class="user-dropdown">
           <div class="user-greeting">
@@ -212,15 +216,16 @@ function updateNavForLoggedInUser(user) {
           <a href="orders.html" class="dropdown-item">
             <i class="fas fa-shopping-bag"></i> My Orders
           </a>
-          ${user.isAdmin
-        ? `
+          ${
+            user.isAdmin
+              ? `
             <div class="dropdown-divider"></div>
             <a href="admin/index.html" class="dropdown-item">
               <i class="fas fa-cog"></i> Admin Dashboard
             </a>
           `
-        : ""
-      }
+              : ""
+          }
           <div class="dropdown-divider"></div>
           <a href="#" id="logout-btn" class="dropdown-item">
             <i class="fas fa-sign-out-alt"></i> Logout
@@ -302,15 +307,17 @@ function getUrlParameter(name) {
 function createProductCard(product) {
   return `
     <div class="product-card">
-      <img src="${product.imageUrl || "images/default-product.jpg"}" alt="${product.name
-    }" class="product-img">
+      <img src="${product.imageUrl || "images/default-product.jpg"}" alt="${
+    product.name
+  }" class="product-img">
       <div class="product-info">
         <h3 class="product-title">${product.name}</h3>
         <p class="product-category">${product.category}</p>
         <p class="product-price">${formatPrice(product.price)}</p>
         <div class="product-rating">${getStarRating(product.rating)}</div>
-        <a href="product-detail.html?id=${product._id
-    }" class="btn">View Details</a>
+        <a href="product-detail.html?id=${
+          product._id
+        }" class="btn">View Details</a>
       </div>
     </div>
   `;

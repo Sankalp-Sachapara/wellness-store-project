@@ -131,18 +131,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function clearMessages() {
+    const existingAlerts = document.querySelectorAll(".alert");
+    existingAlerts.forEach((alert) => alert.remove());
+  }
+
   async function updatePassword() {
     const currentPassword = document.getElementById("current-password").value;
     const newPassword = document.getElementById("new-password").value;
     const confirmPassword = document.getElementById("confirm-password").value;
 
+    // Clear previous messages
+    clearMessages();
+
+    // Validate inputs
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showErrorMessage("Please fill in all password fields");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      showErrorMessage("Passwords do not match");
+      showErrorMessage("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showErrorMessage("New password must be at least 6 characters long");
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL}/users/login`, {
+      // First verify current password
+      const verifyResponse = await fetch(`${API_URL}/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,13 +173,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }),
       });
 
-      if (!response.ok) throw new Error("Current password is incorrect");
+      if (!verifyResponse.ok) {
+        throw new Error("Current password is incorrect");
+      }
 
       // If current password is correct, proceed with update
       const updateResponse = await fetch(
         `${API_URL}/users/profile/${
           JSON.parse(localStorage.getItem("user"))._id
-        }`,
+        }/password`,
         {
           method: "PUT",
           headers: {
@@ -167,12 +189,16 @@ document.addEventListener("DOMContentLoaded", () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
-            password: newPassword,
+            currentPassword,
+            newPassword,
           }),
         }
       );
 
-      if (!updateResponse.ok) throw new Error("Failed to update password");
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.message || "Failed to update password");
+      }
 
       showSuccessMessage("Password updated successfully");
       securityForm.reset();
@@ -340,24 +366,32 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showSuccessMessage(message) {
-    // Replace with a proper toast/notification implementation
     const alert = document.createElement("div");
     alert.className = "alert alert-success";
     alert.innerHTML = `
       <i class="fas fa-check-circle"></i> ${message}
     `;
-    document.body.appendChild(alert);
-    setTimeout(() => alert.remove(), 3000);
+
+    // Insert after the security form heading
+    const securityTab = document.getElementById("security");
+    const heading = securityTab.querySelector("h2");
+    securityTab.insertBefore(alert, heading.nextSibling);
+
+    setTimeout(() => alert.remove(), 5000);
   }
 
   function showErrorMessage(message) {
-    // Replace with a proper toast/notification implementation
     const alert = document.createElement("div");
     alert.className = "alert alert-danger";
     alert.innerHTML = `
       <i class="fas fa-exclamation-circle"></i> ${message}
     `;
-    document.body.appendChild(alert);
-    setTimeout(() => alert.remove(), 3000);
+
+    // Insert after the security form heading
+    const securityTab = document.getElementById("security");
+    const heading = securityTab.querySelector("h2");
+    securityTab.insertBefore(alert, heading.nextSibling);
+
+    setTimeout(() => alert.remove(), 5000);
   }
 });
